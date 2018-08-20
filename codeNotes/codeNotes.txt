@@ -1,0 +1,45 @@
+allPeriods = [] #Esta contendra toda la información para realizar un fitness
+for i in range(len(allSections)):
+    classType = allSections[i].classType
+    periods = 0
+    if(classType == 'LAB'):
+        periods = int(allSections[i].course.labPeriods)
+        labCount = 0
+        thVar = 0
+        for p in range(periods):
+            
+            assignPeriod = { '0'+str(labCount+1)+allSections[i].course.code : allSections[i] }
+            allPeriods.append(assignPeriod)
+            
+            if(labCount == 2):
+                labCount = 0
+                
+            #print assignPeriod
+        
+    elif(classType == 'TH'):
+        periods = int(allSections[i].course.theoryPeriods)
+        
+        for p in range(periods):
+            assignPeriod = { str(p+1)+'0'+allSections[i].course.code : allSections[i] }
+            allPeriods.append(assignPeriod)
+            #print assignPeriods
+    
+
+
+periodCounter = {}  
+teoriaCounter = 0
+labCounter = 0
+print (len(allPeriods))  
+for i in range(len(allPeriods)):
+    if(allPeriods[i].keys()[0] in periodCounter):
+        periodCounter.update( { allPeriods[i].keys()[0] : periodCounter[allPeriods[i].keys()[0]] + 1 })
+    else:
+        periodCounter.update( { allPeriods[i].keys()[0] : 1 })
+        
+for key in periodCounter:
+    print key+"  "+str(periodCounter[key])+"  "+str(allCourses[key[2:]].labPeriods)+"  "+str(allCourses[key[2:]].theoryPeriods)
+    if(key[1] == '0'):
+        teoriaCounter = teoriaCounter + 1
+    else:
+        labCounter = labCounter + 1
+        
