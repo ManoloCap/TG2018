@@ -1,0 +1,562 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Aug 04 20:14:11 2018
+
+@author: Ghost
+"""
+import pandas as pd
+import numpy as np
+import objects
+import math
+import random
+import matplotlib.pyplot as plt
+class GetOutOfLoop( Exception ):
+    pass
+
+
+def getDemandList(route, sheet):
+    df = pd.read_excel(route,  sheetname=sheet)
+    data = df.values.tolist()
+    #data = transpuesta(data)
+    return data
+
+def letJustDepartmentDemand(demand):
+    #IN: Type: List of Demand
+    bufferDic = {}
+    for i in range(len(demand)):
+        try:
+            if(str(demand[i][0])[0:2] == u"IE" or str(demand[i][0])[0:2] == u"IM"):
+                actualDemandDic = { demand[i][0] : int(math.ceil(demand[i][4])) }
+                bufferDic.update(actualDemandDic)
+        except UnicodeEncodeError:
+            None
+    #OUT: type: DIC - { Code : student_Demand }
+    return bufferDic
+
+def print_r(matriz):
+    for fila in matriz:
+        print fila
+
+def transpuesta(matriz):
+    rows = len(matriz)
+    cols = len(matriz[0])
+    return [[matriz[j][i] for j in xrange(rows)] for i in xrange(cols)]
+    
+
+def getDataList(route):
+    df = pd.read_csv(route)
+    data = df.values.tolist()
+    data = transpuesta(data)
+    return data
+    
+
+    
+def createListOfObjects(dataPlan, pensum):
+    listOfObjects = []
+    for index in range(len(dataPlan[0])):
+        
+        newObject = objects.course(dataPlan[13][index], dataPlan[15][index], dataPlan[16][index], str(dataPlan[17][index])[0], str(dataPlan[17][index])[1], str(dataPlan[17][index])[2], dataPlan[20][index], pensum, 0, 0)
+        listOfObjects.append(newObject)
+    
+    #OUT: List of Objects "Course"
+    return listOfObjects
+
+def mergeAllCourses(dataPlanList, demand, maxTheory, maxLeftOver):
+    objectCoursesList = []
+    for i in range(len(dataPlanList)):
+        objectCoursesList.append(createListOfObjects(dataPlanList[i], i))
+      
+    for i in range(len(objectCoursesList)-1):
+        objectCoursesList[0].extend(objectCoursesList[i+1])
+    
+
+    for e in range(len(objectCoursesList[0])):
+        for i in range(len(objectCoursesList[0])):
+            try:
+                if(objectCoursesList[0][e].code == objectCoursesList[0][i].code and
+                   e != i):
+                    objectCoursesList[0][i] = None
+            except AttributeError:
+                None
+                #print( str(counter)+" -- "+str(i))
+
+    departmentList = []
+    exitData = {}
+    for i in range(len(objectCoursesList[0])):
+        try:
+            objectCoursesList[0][i].code
+            if(str(objectCoursesList[0][i].code) == 'nan'):
+                None
+            
+            if(str(objectCoursesList[0][i].code)[0:2] == 'IE' or
+               str(objectCoursesList[0][i].code)[0:2] == 'MT'):
+                departmentList.append(objectCoursesList[0][i])
+        except AttributeError:
+            None
+        
+    for i in range(len(departmentList)):
+        #Llenando demanda; y cantidad de secciones que necesitara el curso en funcion del numero de maximo para teoria y demanda de estudiantes
+        if(departmentList[i].code in demand):
+            departmentList[i].demand = demand[departmentList[i].code]
+            departmentList[i].sections = departmentList[i].demand/maxTheory
+            if(departmentList[i].demand % maxTheory > maxLeftOver):
+                departmentList[i].sections = departmentList[i].sections + 1
+            #print departmentList[i].sections
+            exitData.update({ departmentList[i].code : departmentList[i] })
+            #print departmentList[i].theoryPeriods
+    
+    return exitData
+
+def verifyTeacherAv(listOfTeachers, listOfCourses):
+    exitData = []
+    error = None
+    listOfTeachers2 = listOfTeachers
+    listOfTeachers = []
+    for key in listOfTeachers2:
+        listOfTeachers.append(listOfTeachers2[key])
+        
+    for t in range(len(listOfTeachers)):
+        #print listOfTeachers[t].labPeriods
+    #for t in range(len(listOfTeachers)):
+        totalPeriods = 0
+        for i in range(len(listOfTeachers[t].workTime)):
+
+            for j in range(len(listOfTeachers[t].workTime[i])):
+                #print listOfTeachers[t].workTime[i][j]
+                if(listOfTeachers[t].workTime[i][j] == "x"):
+                    #print listOfTeachers[t].workTime[i][j]
+                    totalPeriods = totalPeriods+1
+                    #print "sumando"
+                    None
+        periodsCount = 0
+        for key in listOfTeachers[t].theoryPeriods:
+            try:
+                periodsCount = periodsCount + int(listOfCourses[key].theoryPeriods)*int(listOfTeachers[t].theoryPeriods[key])
+            except KeyError:
+                error = "ERROR: El profesor "+listOfTeachers[t].name+" tiene asignado un curso que no corresponde a la demanda"
+                break
+            
+        for key in listOfTeachers[t].labPeriods:
+            try:
+                periodsCount = periodsCount + int(listOfCourses[key].labPeriods)*int(listOfTeachers[t].labPeriods[key])
+            except KeyError:
+                error = "ERROR: El profesor "+listOfTeachers[t].name+" tiene asignado un curso que no corresponde a la demanda"
+                break
+
+        if(periodsCount > totalPeriods):
+            error = "ERROR: El profesor "+listOfTeachers[t].name+u" Tiene asignados más periodos que espacio de trabajo"
+
+    #print listOfTeachers[0].workTime
+        exitBuffer = { listOfTeachers[t].name : [periodsCount, totalPeriods] }
+        exitData.append(exitBuffer)
+    return [exitData , error ]
+    
+def readTeachers(route):
+    xls = pd.ExcelFile(route)
+    teacherList = {}
+    for indexProfesor in range(len(xls.sheet_names)):
+        actualTeacher = pd.read_excel(route, xls.sheet_names[indexProfesor])
+        actualTeacher = actualTeacher.values.tolist()
+        name = actualTeacher[0][4].replace(" ", "")+"_"+actualTeacher[1][4].replace(" ", "")
+        workTime = actualTeacher[3:21]
+        workMatrix = []
+        theoryPeriods = {}
+        labPeriods = {}
+        for i in range(len(workTime)):
+            if(i == 4):
+                None
+            else:
+                workMatrix.append(workTime[i][3:8])
+            if(str(workTime[i][8]) != 'nan'):
+                bufferDic = { workTime[i][8]:workTime[i][9] }
+                theoryPeriods.update(bufferDic)
+                bufferDic = { workTime[i][8]:workTime[i][10] }
+                labPeriods.update(bufferDic)
+            
+        teacherList.update({ name : objects.teacher( name, workMatrix, theoryPeriods, labPeriods)})
+    #data = transpuesta(data)
+   
+    #print teacherData[0][4]
+    return teacherList
+
+def loadForbiddens(route):
+    xls = pd.ExcelFile(route)
+    forbiddenList = []
+    for indexYear in range(len(xls.sheet_names)):
+        actualYear = pd.read_excel(route, xls.sheet_names[indexYear])
+        
+        actualYear = actualYear.values.tolist()
+        workTime = actualYear[3:21]
+        workMatrix = []
+        #print workTime
+        for i in range(len(workTime)):
+            if(i == 4):
+                None
+            else:
+                workMatrix.append(workTime[i][3:8])
+                
+        
+        forbiddenList.append(objects.forbiddenTime(xls.sheet_names[indexYear], workMatrix))
+        #print objects.forbiddenTime(xls.sheet_names[indexYear], workMatrix)
+        #forbiddenList.append(objects.forbiddenTime( year, forbiddenPeriods))  
+    #data = transpuesta(data)
+   
+    #print teacherData[0][4]   
+    return forbiddenList
+    
+    
+def InitialSolution(allCourses, labMax, labLeftOver, nLabs):
+    labSections = 0
+    allSections = []
+    contadorSecciones = 0
+    contadorSeccioensLab = 0
+    
+    for key in allCourses:
+        #print key+"  "+str(allCourses[key].demand)
+        for s in range(allCourses[key].sections):
+            sectionObject = objects.section(allCourses[key], None, None, 'TH', str(s+1)+'0'+key)
+            sectionObject.labNumber = ''
+            allSections.append(sectionObject)
+            #print  str(s+1)+'0'+key+' TH'
+            #print key+"  "+'TH'
+            contadorSecciones = contadorSecciones + 1
+            
+            #print str(s+1)+'0'+key
+            
+        if(int(allCourses[key].labPeriods) != 0):
+            #print allCourses[key].labPeriods
+            
+            if(allCourses[key].demand % labMax > labLeftOver):
+                labSections = allCourses[key].demand/labMax + 1
+            else:
+                labSections = allCourses[key].demand/labMax
+                
+            #print labSections
+            labSection = 1
+            contador = 1
+            for l in range(labSections):
+                if(contador == 2):
+                    sectionObject = objects.section(allCourses[key], None, None, 'LAB', str(labSection)+str(contador)+key)
+                    sectionObject.labNumber = random.randrange(0,nLabs,1)
+                    allSections.append(sectionObject)
+                    #print ""                    
+                    #print str(labSection)+str(contador)+key+' LAB'
+                    #print key+"  "+'LAB'
+                    contadorSeccioensLab = contadorSeccioensLab +1
+                    contador = 1
+                    labSection = labSection +1
+                    
+                else:
+                    sectionObject =(objects.section(allCourses[key], None, None, 'LAB', str(labSection)+str(contador)+key))
+                    sectionObject.labNumber = random.randrange(0,nLabs,1)
+                    allSections.append(sectionObject)
+                    #print str(labSection)+str(contador)+key+' LAB'
+                    contador = contador + 1
+                    
+                
+
+    return allSections
+
+
+def random_assign(allPeriods, allTeachers):
+    solution = []
+
+    
+    for P in range(len(allPeriods)):
+        continueVar = True 
+        while continueVar == True:
+            #print P
+            continueVar = False
+            randomDay = random.randrange(0,5,1)
+            randomPeriod = random.randrange(0,17,1)
+            randomTeacher = allTeachers.keys()[random.randrange(0,len(allTeachers),1)]
+            for i in range(len(solution)):
+                #print ""
+                #print "----"+str(P)+"--------"
+
+                if(solution[i].day == randomDay and solution[i].period == randomPeriod and solution[i].teacher == randomTeacher):
+                    continueVar = True
+                    print str(randomPeriod)+" -  "+str(solution[i].period)
+                    print str(randomDay)+" -  "+str(solution[i].day)
+                    print randomTeacher+"  -  "+solution[i].teacher
+                    
+            if(continueVar == False):
+                #print "SUCCESS"
+                solution.append( objects.period( allPeriods[P][allPeriods[P].keys()[0]], 
+                                                 allPeriods[P].keys()[0], 
+                                                 randomDay, 
+                                                 randomPeriod, 
+                                                 randomTeacher))
+      
+    return solution
+    
+    
+def FITNESS1(solution, allTeachers, allLabs, nlabs, labTime):
+################ CONTROL POINTS ########################################    
+
+    laboratorioNoOcupado = 30
+    profesorDisponible = 30
+    cercanos = 60
+    sameDay = 400
+
+
+##############################################################    
+    score = []
+    bufferScore =  0
+    allLabsList = []
+    bufferLabTime = {}
+
+
+    for S in range(len(solution)):
+        if(labTime == None):
+            # LAB MATRIX #
+            labs = []
+            laboratoryT = []
+            row = []
+            for poblation in range(nlabs):
+                for i in range(17):
+                    for j in range(5):
+                        row.append('x')
+                    laboratoryT.append(row)
+                    row = []
+                labs.append(laboratoryT)
+            # LAB MATRIX #
+                
+            bufferLabTime = {}
+            for i in range(len(allLabs)):   
+                bufferLabTime.update({ i : labs[i] })
+            
+        else:
+            bufferLabTime = labTime[S]
+       
+        
+        #print "Solution "+str(S)+":"
+
+        for i in range(len(solution[S])):
+            
+            # ---------- PUNTOS 1 --------------------- Laboratorio no ocupado
+            #print solution[S][i]
+            if(solution[S][i].section.classType == 'LAB'):
+
+                if(bufferLabTime[solution[S][i].section.labNumber][solution[S][i].period][solution[S][i].day] == 'x'): #Se revisa que este libre el periodo en el laboratorio asignado
+                    bufferScore = bufferScore + laboratorioNoOcupado       # PUNTOS AUMENTAN
+                    bufferLabTime[solution[S][i].section.labNumber][solution[S][i].period][solution[S][i].day]  = solution[S][i].code
+
+                else:
+                    None  # PUNTOS NO CAMBIAN
+            # --------------------- PUNTOS 2 ------------- Profesor disponible
+            
+            if (allTeachers[solution[S][i].teacher].workTime[solution[S][i].period][solution[S][i].day] == 'x' ):
+                bufferScore = bufferScore + profesorDisponible
+                
+            # ----------------- PUNTOS 3 ----------------- Posee cursos del mismo tipo antes o después de él
+
+            if(i != 0):
+                if(solution[S][i-1].code == solution[S][i].code and
+                  (solution[S][i-1].period == solution[S][i].period -1 or solution[S][i-1].period == solution[S][i].period +1) ):
+                       
+                       #print str(solution[S][i-1].period)+"   "+str(solution[S][i].period)
+                       bufferScore = bufferScore + cercanos
+                       
+               
+             #------------------ Puntos por estar el mismo dia -------------------------------------
+
+            if(i != 0):
+                if(solution[S][i-1].code == solution[S][i].code and
+                   solution[S][i-1].day == solution[S][i].day ):
+                       
+                       #print str(solution[S][i-1].period)+"   "+str(solution[S][i].period)
+                       bufferScore = bufferScore + sameDay
+                             
+                            
+            #print solution[S][i].day
+                  
+        #Actualizando score para individuo, lab para individuo
+        score.append(bufferScore)
+        bufferScore = 0
+        #print bufferLabTime
+        allLabsList.append(bufferLabTime)   
+        
+       
+    print score
+   # print allLabsList[0][0] 
+    return score, allLabsList
+    
+
+def Crossover_Mutation_1(generation, allLabs, allTeachers):
+    # ----- For Mutation ----
+    minDay = 0
+    maxDay = 5
+    minPeriod = 0
+    maxPeriod = 17
+    totalMutations = 25
+    # ----------------
+    # ---------     CROSSOVER TIPO #1: Recombinación de cromosomas orenados: -------------- 
+    #print allLabs
+    for i in range(len(generation)):
+        #print generation[i]
+        #print ""
+        for j in range(len(generation[i])):
+            #print generation[i][j]
+            randomJ = random.randrange(0,len(generation[i]), 1)
+            
+            old_day = generation[i][randomJ].day
+            old_period =  generation[i][randomJ].period
+            old_labNumber = generation[i][randomJ].section.labNumber
+            
+            #day
+            generation[i][randomJ].day = generation[i][j].day
+            generation[i][j].day = old_day
+            
+            #periodo
+            generation[i][randomJ].period = generation[i][j].day
+            generation[i][j].day =old_period
+            
+            #posicionEnLab
+            generation[i][randomJ].section.labNumber = generation[i][j].section.labNumber
+            generation[i][j].section.labNumber = old_labNumber
+
+
+     # ---------     CROSSOVER TIPO #2: Corte y empalme -------------- 
+    
+    
+    
+    
+    
+    #Selected Mutation
+
+    for mutation in range(totalMutations):
+        individual = random.randrange(0, len(generation), 1)
+        period = random.randrange(0, len(generation[individual]) ,1)
+        
+        randomDay = random.randrange(minDay, maxDay ,1)
+        randomPeriod = random.randrange(minPeriod, maxPeriod ,1)
+        randomTeacher = random.choice(allTeachers.keys())
+        
+
+        
+        doTheMutation = False
+        for mut in range(len(generation[i])):
+            if( generation[i][mut].day == randomDay and generation[i][mut].period == randomPeriod or generation[i][mut].teacher == randomTeacher):
+                doTheMutation = False
+            else:
+                doTheMutation = True
+                
+        
+        if(doTheMutation == True):
+            generation[individual][period].day = randomDay
+            generation[individual][period].period = randomPeriod
+            
+        #print doTheMutation
+
+                    
+
+                
+
+    
+   
+    
+    
+    
+
+    print "FINISH"     
+    return generation, allLabs
+    
+    
+
+# -----------   FUNCIONES YA NO UTILIZADAS  -------------
+#def putPosition(section, allSections, allTeachers, allLabs):
+#    status = 'FAIL'
+#    #print section.course.code
+#    try:
+#        if(section.classType == 'TH'):
+#            periods = int(section.course.theoryPeriods)
+#            
+#            for key in allTeachers:
+#                if( section.course.code in allTeachers[key].theoryPeriods):
+#                    for F in range(len(allTeachers[key].workTime)):
+#                        for C in range(len(allTeachers[key].workTime[F])):
+#                            
+#                            if(allTeachers[key].workTime[F][C] == 'x' and ((F+periods-1) < 17 )):
+#                                #print periods
+#                                if(periods < 4 and
+#                                   allTeachers[key].workTime[F+1][C] == 'x' and
+#                                   allTeachers[key].workTime[F+2][C] == 'x' and 
+#                                   allLabs):
+#                                       
+#                                       allTeachers[key].workTime[F][C] = section.course.code
+#                                       allTeachers[key].workTime[F+1][C] = section.course.code
+#                                       allTeachers[key].workTime[F+2][C] = section.course.code
+#                                       section.teacher = allTeachers[key]
+#                                       section.position = str(C)+str(F)+str(F+1)+str(F+2)
+#                                       #for i in range(len(allTeachers[key].workTime)):
+#                                           #print allTeachers[key].workTime[i]
+#                                       #print ""
+#                                       
+#                                       status = 'SUCCESS'
+#                                       raise GetOutOfLoop
+#                                       
+#                                    
+#                                    
+#                    
+#        elif(section.classType == 'LAB'):
+#            periods = int(section.course.labPeriods)
+#    
+#            for key in allTeachers:
+#                if( section.course.code in allTeachers[key].labPeriods):
+#                    for F in range(len(allTeachers[key].workTime)):
+#                        for C in range(len(allTeachers[key].workTime[F])):
+#                            if(allTeachers[key].workTime[F][C] == 'x' and ((F+periods-1) < 17 )):
+#                                #print periods
+#                                if(periods < 4 and
+#                                   allTeachers[key].workTime[F+1][C] == 'x' and
+#                                   allTeachers[key].workTime[F+2][C] == 'x'):
+#                                       
+#                                       for labKey in allLabs:
+#                                           
+#                                           if(allLabs[labKey].time[F][C] == 'x' and
+#                                              allLabs[labKey].time[F+1][C] == 'x' and
+#                                              allLabs[labKey].time[F+2][C] == 'x'):
+#                                                  
+#                                               #SETTING TEACHERS TIME
+#                                               allTeachers[key].workTime[F][C] = section.course.code
+#                                               allTeachers[key].workTime[F+1][C] = section.course.code
+#                                               allTeachers[key].workTime[F+2][C] = section.course.code
+#                                               
+#                                               #SETTING SECTION TIME
+#                                               section.teacher = allTeachers[key]
+#                                               section.position = str(C)+str(F)+str(F+1)+str(F+2)
+#                                               #for i in range(len(allTeachers[key].workTime)):
+#                                                   #print allTeachers[key].workTime[i]
+#                                               #print ""
+#                                               
+#                                               # SETTING LAB TIME
+#                                               allLabs[labKey].time[F][C] = section.course.code
+#                                               allLabs[labKey].time[F+1][C] = section.course.code
+#                                               allLabs[labKey].time[F+2][C] = section.course.code
+#                                               status = 'SUCCESS'
+#                                               raise GetOutOfLoop
+#
+#        
+#    except GetOutOfLoop:
+#        pass   
+#
+#    return allSections, allTeachers, allLabs, status
+#        
+#def assignInitial(allSections, allCourses, allTeachers, allLabs):
+#    successCount = 0
+#    errorSections = []
+#    for i in range(len(allSections)):
+#        allSections, allTeachers, allLabs, status = putPosition(allSections[i], allSections, allTeachers, allLabs)
+#        
+#        if( status == 'SUCCESS' ):
+#            successCount = successCount + 1
+#        else:
+#            errorSections.append(allSections[i])
+#            #print allSections[i].teacher.name
+#        #print allSections[i].course.code
+#        #print str(i)+" "+status
+#        #print ""
+#    print str(successCount)+" of "+str(len(allSections))    
+#    return allSections, allTeachers, allLabs, errorSections

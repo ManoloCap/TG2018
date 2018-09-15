@@ -1,0 +1,29 @@
+    # ---------     CROSSOVER TIPO #1: Recombinación de cromosomas orenados: -------------- 
+   
+    for i in range(len(generation)):
+        #print generation[i]
+        #print ""
+        for j in range(len(generation[i])):
+            #print generation[i][j]
+            old_day = generation[i][j].day
+            old_period =  generation[i][j].period
+            old_teacher =  generation[i][j].teacher
+           
+            
+            #day
+            randomJ = random.randrange(0,len(generation[i]), 1)
+            generation[i][j].day = generation[i][randomJ].day
+            generation[i][randomJ].day = old_day
+            
+            #periodo
+            randomJ = random.randrange(0,len(generation[i]), 1)
+            generation[i][j].period = generation[i][randomJ].period
+            generation[i][randomJ].period = old_period
+            
+            #teacher
+            randomJ = random.randrange(0,len(generation[i]), 1)
+            generation[i][j].teacher = generation[i][randomJ].teacher
+            generation[i][randomJ].teacher = old_teacher
+
+
+     # ---------     CROSSOVER TIPO #2: Corte y empalme -------------- 
