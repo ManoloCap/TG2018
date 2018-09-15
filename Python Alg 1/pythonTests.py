@@ -157,6 +157,7 @@ for f in range(nGenMax):
     minNumber = 1
     new_mondayVectorList = []
     bestLocation = 0
+
     # SE DEJARÁN CIERTO NUMERO DE MEJORES INDIVIDUOS Y CIERTO NUMERO DE PEORES INDIVIDUOS
     
     # los maxNumber sobrevivientes
