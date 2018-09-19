@@ -1,65 +1,37 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import operator
 import numpy as np
 import random
 
+OUTSTANDING_PERCENTAGE = 0.65
+MAX_PAIRS = 1000
+def selection(generation, fitness):
+    # Selection : return list of 2D tuples (candidate, candidate)
 
-def selection(generation, fitness, goodValue):
-    # TODO: return list of 2D tuples (candidate, candidate)
-    #Puntos para hacer beak
-    scores = fitness(generation)
+    scores = []
+    for individual in generation:
 
+        scores.append({
+            'individual': individual,
+            'score': int(fitness(individual))
+        })
 
-
-    [parents, allLabs, allTeachers, forbiddenTime] = generation
-    [parentsC, allLabsC, allTeachersC, forbiddenTimeC] = generation
-
-
-    #CRITERIO Selección de los mejores
-    betterPairs = int(len(parents)*0.65)
-
-
-    betterParentsList = []
-    betterLabList = []
-    betterTeacherList = []
-    betterForbiddenList = []
-
-    #DETENER ALG SI SE CONSIGUE UNA MUY BUENA GENERACON -----------------------
-    for points in scores:
-        if(points > goodValue):
-            return True
-    # ------------------------
-    for pair in range(betterPairs):
-        betterI = np.argmax(scores)
-
-        betterParentsList.append(parentsC[betterI])
-        betterLabList.append(allLabsC[betterI])
-        betterTeacherList .append(allTeachersC[betterI])
-        betterForbiddenList .append(forbiddenTimeC[betterI])
-        scores[betterI] = -999999
+    sorted_scores = sorted(scores, key=lambda item: item['score'], reverse=True)
 
 
-    #print len(betterParentsList)
+    if(int(len(sorted_scores) * OUTSTANDING_PERCENTAGE) % 2 == 0):
+        elite_length = int(len(sorted_scores) * OUTSTANDING_PERCENTAGE)
+    else:
+        elite_length = int(len(sorted_scores) * OUTSTANDING_PERCENTAGE) + 1
 
+    elite = sorted_scores[0:elite_length]
     pairs = []
-    counter = 0
-    bufferValue = 0
-    while counter != len(parents):
-        i = random.randrange(0,len(parents),1)
-        pairBuffer = [parents[i], allLabs[i], allTeachers[i], forbiddenTime[i]]
-        #print bufferValue
-        pairBuffer2 = [ betterParentsList[bufferValue] , betterLabList[bufferValue], betterTeacherList[bufferValue], betterForbiddenList[bufferValue]]
-        pairs.append([pairBuffer, pairBuffer2])
 
-        if(counter >= len(betterParentsList) -1 ):
-            bufferValue = 0
-        else:
-            bufferValue = bufferValue + 1
+    for pairNumber in range(len(elite)-1):
+        #print 'p1 :' + str(elite[pairNumber]['score'])+" - p2 : "+str(elite[pairNumber+1]['score'])
+        pairs.append([elite[pairNumber]['individual'], elite[pairNumber+1]['individual']])
+        if(len(pairs) >= MAX_PAIRS/3):
+            break
 
-        counter = counter  + 1
-
-    # print len(pairs[0])
-    # print "JEJE"
-
-
-    return pairs
+    return (pairs, sorted_scores)

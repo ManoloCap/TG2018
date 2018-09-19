@@ -70,10 +70,10 @@ class laboratory: #ClassRoom
 
 class period:
 
-     def __init__(self, section, period, day):
+     def __init__(self, section, period, day, teacher, code):
 
         self.section = section
-        self.code = section.code
-        self.day = day
         self.period = period
-        self.teacher = section.teacher
+        self.day = day
+        self.teacher = teacher
+        self.code = code

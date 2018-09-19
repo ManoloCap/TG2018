@@ -1082,99 +1082,17 @@ def showCompleteData(generation):
 
     return completeData
 
+def logger(individual, bestIndividual):
 
-# -----------   FUNCIONES YA NO UTILIZADAS  -------------
-#def putPosition(section, allSections, allTeachers, allLabs):
-#    status = 'FAIL'
-#    #print section.course.code
-#    try:
-#        if(section.classType == 'TH'):
-#            periods = int(section.course.theoryPeriods)
-#
-#            for key in allTeachers:
-#                if( section.course.code in allTeachers[key].theoryPeriods):
-#                    for F in range(len(allTeachers[key].workTime)):
-#                        for C in range(len(allTeachers[key].workTime[F])):
-#
-#                            if(allTeachers[key].workTime[F][C] == 'x' and ((F+periods-1) < 17 )):
-#                                #print periods
-#                                if(periods < 4 and
-#                                   allTeachers[key].workTime[F+1][C] == 'x' and
-#                                   allTeachers[key].workTime[F+2][C] == 'x' and
-#                                   allLabs):
-#
-#                                       allTeachers[key].workTime[F][C] = section.course.code
-#                                       allTeachers[key].workTime[F+1][C] = section.course.code
-#                                       allTeachers[key].workTime[F+2][C] = section.course.code
-#                                       section.teacher = allTeachers[key]
-#                                       section.position = str(C)+str(F)+str(F+1)+str(F+2)
-#                                       #for i in range(len(allTeachers[key].workTime)):
-#                                           #print allTeachers[key].workTime[i]
-#                                       #print ""
-#
-#                                       status = 'SUCCESS'
-#                                       raise GetOutOfLoop
-#
-#
-#
-#
-#        elif(section.classType == 'LAB'):
-#            periods = int(section.course.labPeriods)
-#
-#            for key in allTeachers:
-#                if( section.course.code in allTeachers[key].labPeriods):
-#                    for F in range(len(allTeachers[key].workTime)):
-#                        for C in range(len(allTeachers[key].workTime[F])):
-#                            if(allTeachers[key].workTime[F][C] == 'x' and ((F+periods-1) < 17 )):
-#                                #print periods
-#                                if(periods < 4 and
-#                                   allTeachers[key].workTime[F+1][C] == 'x' and
-#                                   allTeachers[key].workTime[F+2][C] == 'x'):
-#
-#                                       for labKey in allLabs:
-#
-#                                           if(allLabs[labKey].time[F][C] == 'x' and
-#                                              allLabs[labKey].time[F+1][C] == 'x' and
-#                                              allLabs[labKey].time[F+2][C] == 'x'):
-#
-#                                               #SETTING TEACHERS TIME
-#                                               allTeachers[key].workTime[F][C] = section.course.code
-#                                               allTeachers[key].workTime[F+1][C] = section.course.code
-#                                               allTeachers[key].workTime[F+2][C] = section.course.code
-#
-#                                               #SETTING SECTION TIME
-#                                               section.teacher = allTeachers[key]
-#                                               section.position = str(C)+str(F)+str(F+1)+str(F+2)
-#                                               #for i in range(len(allTeachers[key].workTime)):
-#                                                   #print allTeachers[key].workTime[i]
-#                                               #print ""
-#
-#                                               # SETTING LAB TIME
-#                                               allLabs[labKey].time[F][C] = section.course.code
-#                                               allLabs[labKey].time[F+1][C] = section.course.code
-#                                               allLabs[labKey].time[F+2][C] = section.course.code
-#                                               status = 'SUCCESS'
-#                                               raise GetOutOfLoop
-#
-#
-#    except GetOutOfLoop:
-#        pass
-#
-#    return allSections, allTeachers, allLabs, status
-#
-#def assignInitial(allSections, allCourses, allTeachers, allLabs):
-#    successCount = 0
-#    errorSections = []
-#    for i in range(len(allSections)):
-#        allSections, allTeachers, allLabs, status = putPosition(allSections[i], allSections, allTeachers, allLabs)
-#
-#        if( status == 'SUCCESS' ):
-#            successCount = successCount + 1
-#        else:
-#            errorSections.append(allSections[i])
-#            #print allSections[i].teacher.name
-#        #print allSections[i].course.code
-#        #print str(i)+" "+status
-#        #print ""
-#    print str(successCount)+" of "+str(len(allSections))
-#    return allSections, allTeachers, allLabs, errorSections
+    if(bestIndividual != ''):
+        if( individual['score'] > bestIndividual['score']):
+            bestIndividual = individual
+            print "NEW MAX SCORE: "+str(bestIndividual['score'] )
+            print showCompleteData(bestIndividual['individual'])
+            print "---------------------------------------"
+    else:
+        bestIndividual = individual
+        print "NEW MAX SCORE: "+str(bestIndividual['score'] )
+        print showCompleteData(bestIndividual['individual'])
+        print "---------------------------------------"
+    return bestIndividual

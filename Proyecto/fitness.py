@@ -2,54 +2,54 @@
 # -*- coding: utf-8 -*-
 from functions import showCompleteData as sortData
 import collections
-def fitness(candidate):
-    # TODO: return number, the higher the fitter
 
-    #-------------- CRITERIOS DE PUNTOS ORIENTADO POSITIVO ---------------------
-    # PUNTOS POSITIVOS
-    closeTHPoints = 2500 #Puntos por periodos de Teoría cercanos
-    closeLABPoints = 2500 #Puntos por periodos de lab cercanos
-    sameDayPoints = 2500 #Puntos por periodos del mismo código en el mismo día
-    periodForTeacherPoints = 200  #Puntos por ser un curso correcto para el profesor
-    demandPositivePoints = 200  #Puntos por cumplir con las demandas
-    repeatedPositivePoints = 1500  #Puntos por no repetir en teachers
-    goodFTPoints = 500  #Puntos por no utilizar horarios prohibidos
-    sameYearPositivePoints = 1500 #Puntos por no cruzar en el mismo año
+def generate_fitness(allLabs, allTeachers, forbiddenTime):
 
-    #Puntos NEGATIVOS
-    overSizeLab = -2000 #Laboratorio con más periodos de su capacidad
-    demandNegativePoints = -500  #Teacehr No cumple con su demanda
-    repeatedNegativePoints = -3000  #En Teacher: horarios simultaneos
-    badFTPoints = -2000   #Periodos Prohibidos
-    sameYearNegativePoints = -2000 #Puntos por no cruzar en el mismo año
+    def fitness(candidate):
+        # TODO: return number, the higher the fitter
 
-    [generation, allLabs, allTeachers, forbiddenTime] = candidate
+        #-------------- CRITERIOS DE PUNTOS ORIENTADO POSITIVO ---------------------
+        # PUNTOS POSITIVOS
+        closeTHPoints = 2500 #Puntos por periodos de Teoría cercanos
+        closeLABPoints = 2500 #Puntos por periodos de lab cercanos
+        sameDayPoints = 5000 #Puntos por periodos del mismo código en el mismo día
+        periodForTeacherPoints = 200  #Puntos por ser un curso correcto para el profesor
+        demandPositivePoints = 200  #Puntos por cumplir con las demandas
+        repeatedPositivePoints = 1500  #Puntos por no repetir en teachers
+        goodFTPoints = 500  #Puntos por no utilizar horarios prohibidos
+        sameYearPositivePoints = 1500 #Puntos por no cruzar en el mismo año
 
-    scores = []
-    completeData = []
+        #Puntos NEGATIVOS
+        overSizeLab = -2000 #Laboratorio con más periodos de su capacidad
+        demandNegativePoints = -500  #Teacehr No cumple con su demanda
+        repeatedNegativePoints = -3000  #En Teacher: horarios simultaneos
+        badFTPoints = -2000   #Periodos Prohibidos
+        sameYearNegativePoints = -2000 #Puntos por no cruzar en el mismo año
 
 
-    for parent in range(len(generation)):
+
+        scores = []
+        completeData = []
         bufferScore = 0
-        completeData = sortData(generation[parent])
+        completeData = sortData(candidate)
 
         labCounter = {}
         demandCounter = {}
         usedForTeachers = {}
         yearCounter = {}
 
-        for labCode in allLabs[parent]:
+        for labCode in allLabs:
             labCounter.update( { labCode : 0 } )
 
-        for teacher in allTeachers[parent]:
-            demandCounter.update( { teacher : allTeachers[parent][teacher].demandLeft })
+        for teacher in allTeachers:
+            demandCounter.update( { teacher : allTeachers[teacher].demandLeft })
             usedForTeachers.update( {teacher : []} )
 
         for i in range(1,6,1):
             yearCounter.update({ i : [[]] })
 
         #No Cruzar periodos del mismo año
-        for period in generation[parent]:
+        for period in candidate:
             bufferTime = [period.period , period.day]
             bufferPeriod = yearCounter[period.section.course.year]
             bufferPeriod.append(bufferTime)
@@ -60,7 +60,7 @@ def fitness(candidate):
         for key in completeData:
 
             #Teacher Points iterations
-            for teacher in allTeachers[parent]:
+            for teacher in allTeachers:
                 #Demanda Cumplida
                 if(key[2:] in demandCounter[teacher]):
                     if(teacher == completeData[key]['TH']['teacher']):
@@ -95,7 +95,7 @@ def fitness(candidate):
 
             # Puntos por horario correcto para su profesor
             for p in range(len(periodos)):
-                if(periodos[p] in allTeachers[parent][completeData[key]['TH']['teacher']].prettyWorkTime):
+                if(periodos[p] in allTeachers[completeData[key]['TH']['teacher']].prettyWorkTime):
                     bufferScore = bufferScore + periodForTeacherPoints #Periodo correcto para el profesor
 
             #Periodos LAB
@@ -113,7 +113,7 @@ def fitness(candidate):
 
             # Puntos por horario correcto para su profesor
                 for p in range(len(periodos)):
-                    if(periodos[p] in allTeachers[parent][completeData[key]['LAB'][labCode]['teacher']].prettyWorkTime):
+                    if(periodos[p] in allTeachers[completeData[key]['LAB'][labCode]['teacher']].prettyWorkTime):
                         bufferScore = bufferScore + periodForTeacherPoints #Periodo correcto para el profesor
 
 
@@ -147,12 +147,12 @@ def fitness(candidate):
                 bufferScore = bufferScore + repetidos*repeatedNegativePoints
 
         #forbiddenTime iterations
-        for time in forbiddenTime[parent]:
-            for period in range(len(generation[parent])):
-                p = [ generation[parent][period].period , generation[parent][period].day ]
+        for time in forbiddenTime:
+            for period in range(len(candidate)):
+                p = [ candidate[period].period , candidate[period].day ]
 
                 if(p in time.prettyForbiddenTime):
-                    if(int(time.year[-1:]) == generation[parent][period].section.course.year):
+                    if(int(time.year[-1:]) == candidate[period].section.course.year):
                         bufferScore = bufferScore + badFTPoints
                     else:
                         bufferScore = bufferScore + goodFTPoints
@@ -168,19 +168,7 @@ def fitness(candidate):
                 bufferScore = bufferScore + sameYearPositivePoints
             else:
                 bufferScore = bufferScore + repetidos*sameYearNegativePoints
+                
+        return bufferScore
 
-        scores.append(bufferScore)
-
-
-
-
-    # PRINT SPACE
-    # print len(scores)
-    print scores
-    print ""
-    # print "-------------"
-    #print usedForTeachers
-    #print labCounter
-    #print demandCounter
-    #print completeData
-    return scores
+    return fitness

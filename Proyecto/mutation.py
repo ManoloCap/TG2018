@@ -1,39 +1,45 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import random
+from objects import period as createPeriod
+def generate_mutation(allLabs, allTeachers, forbiddenTime):
 
-def mutation(candidate):
+
+    def mutatePeriod(period):
+
+        actual_Code = period.code
+        actual_Section = period.section
+
+        mutated_Day = random.randrange(0, 17 , 1)
+        mutated_Period = random.randrange(0, 5, 1)
+        mutated_Teacher = random.choice(allTeachers.keys())
+        if(actual_Section.labNumber != ''):
+            mutated_Lab = random.choice(allLabs.keys())
+        else:
+            mutated_Lab = ''
+
+        new_Period = createPeriod( actual_Section,
+                    mutated_Day,
+                    mutated_Period,
+                    mutated_Teacher,
+                    actual_Code)
+
+        return new_Period
+
+    def mutation(candidate):
     # TODO: return new candidate
-    #cantidad de mutaciones máximas
-    maxMutations = 300
+        #cantidad de mutaciones máximas
+        probability = 0.1 # Probabilidad de mutar de 0 a 1
 
-    #Mutaciones reales
-    mutations = random.randrange(0, maxMutations, 1)
-    #--------------------------
+        #Mutaciones reales
 
-    [parents, allLabs, allTeachers, forbiddenTime]  = candidate
-
-    for period in range(len(parents)):
-        mutations = random.randrange(0, maxMutations, 1)
-        #print "MUTACIONES: "+str(mutations)
-        for x in range(mutations):
-            mutationType = random.randrange(0,4,1)
-
-            if(mutationType == 0): #Mutacion de día
-                newDay = random.randrange(0,5,1)
-                parents[period].day = newDay
-
-            elif(mutationType == 1): #Mutación de Periodo
-                newPeriod = random.randrange(0,17,1)
-                parents[period].period = newPeriod
-
-            elif(mutationType == 2): #Mutacion de teacher
-                newTeacher = random.choice(allTeachers.keys())
-                parents[period].section.teacher = newTeacher
-
-            elif(mutationType == 3): #Mutación de número de laboratorio
-                newPeriod = random.randrange(0, len(allLabs), 1)
-                parents[period].section.labNumber = newPeriod
+        #--------------------------
+        for periodPosition in range(len(candidate)):
+            do_Mutation = random.randrange(0, 100, 1)
+            if(do_Mutation >= probability*100):
+                candidate[periodPosition] = mutatePeriod(candidate[periodPosition])
 
 
-    return [parents, allLabs, allTeachers, forbiddenTime]
+        return candidate
+
+    return mutation

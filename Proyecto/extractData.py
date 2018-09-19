@@ -21,22 +21,17 @@ def generateData(poblation):
     minNumber = 1
     showScores = True
     #-----------------------Labs for all the poblation -------------------------------
-    allLabs = []
-    bufferIndividual = {}
-    for individual in range(poblation):
-        for i in range(labs):
-            bufferLab = objects.laboratory(i)
-            bufferIndividual.update( { bufferLab.number  : bufferLab})
-        allLabs.append(bufferIndividual)
-        bufferIndividual = {}
 
-    #print allLabs[0][0].time
+    allLabs = {}
 
-    #print allLabs
+    for i in range(labs):
+        bufferLab = objects.laboratory(i)
+        allLabs.update( { bufferLab.number  : bufferLab})
+
     #------------- Importando y limpiando demanda  ------------------------
+
     demand = functions.getDemandList('data/demanda2018Ciclo2.xlsx', 'Hoja2')
-    #print functions.letJustDepartmentDemand(demand)
-    #print demand
+
     #-------------Agregar para n planes----------
     dataPlanM2016 = functions.getDataList('data/planM2016.csv')
     dataPlanE2016 = functions.getDataList('data/planE2016.csv')
@@ -54,35 +49,18 @@ def generateData(poblation):
                                             maxLeftOver)
 
 
-    #print allCourses
-    #for i in range(len(allCourses)): print allCourses[i].code #Ver cursos a programar
-
-    allTeachers = []
     #------------- Importando profesores ------------------------
-    for i in range(poblation):
-        allTeachers.append(functions.readTeachers('data/profesores.xlsx', allCourses))
 
-    #print allTeachers[0][allTeachers[0].keys()[0]].name
-    #print allTeachers[0][allTeachers[0].keys()[0]].prettyWorkTime
+    allTeachers  = functions.readTeachers('data/profesores.xlsx', allCourses)
+
 
     # ----------------- Adding forbiddenTime ---------------------------
-    forbiddenTime = []
-    for i in range(poblation):
-        forbiddenTime.append(functions.loadForbiddens('data/horariosProhibidos.xlsx'))
 
-    #print ""
-    #print forbiddenTime[0][0].prettyForbiddenTime
+    forbiddenTime = functions.loadForbiddens('data/horariosProhibidos.xlsx')
 
-    #for i in range(len(forbiddenTime)):
-    #    pprint(forbiddenTime[i])
+    #-------------- Verify Av. -------------------------
 
-    #--------------------------- Verify Av. -------------------------
-    verifyData = []
-    for i in range(poblation):
-        verifyData.append(functions.verifyTeacherAv(allTeachers[i], allCourses))
-
-    #print verifyData
-
+    verifyData = functions.verifyTeacherAv(allTeachers, allCourses)
 
     # --------------  PARTE ASIGNACIÓN DE HORARIOS -------------------
 
@@ -130,41 +108,36 @@ def generateData(poblation):
     # -----------------AHORA A PARTIR DE LAS SECCIONES SE VAN A GENERAR "PERIODOS" -----------------
     allPeriods = [] #Esta contendra toda la información para realizar un fitness
     allPeriodsBuffer = []
-    for pob in range(poblation):
-        for i in range(len(allSections)):
 
-            classType = allSections[i].classType
-            periods = 0
-            if(classType == 'LAB'):
-                periods = int(allSections[i].course.labPeriods)
-                labCount = 0
-                thVar = 0
-                for p in range(periods):
+    for i in range(len(allSections)):
 
-                    assignPeriod = { allSections[i].code : allSections[i] }
-                    allPeriodsBuffer.append(assignPeriod)
+        classType = allSections[i].classType
+        periods = 0
+        if(classType == 'LAB'):
+            periods = int(allSections[i].course.labPeriods)
+            labCount = 0
+            thVar = 0
+            for p in range(periods):
 
-                    if(labCount == 2):
-                        labCount = 0
+                assignPeriod = { allSections[i].code : allSections[i] }
+                allPeriodsBuffer.append(assignPeriod)
 
-                    #print assignPeriod
+                if(labCount == 2):
+                    labCount = 0
 
-            elif(classType == 'TH'):
-                periods = int(allSections[i].course.theoryPeriods)
+                #print assignPeriod
 
-                for p in range(periods):
-                    assignPeriod = { allSections[i].code : allSections[i] }
-                    allPeriodsBuffer.append(assignPeriod)
-                    #print assignPeriods
+        elif(classType == 'TH'):
+            periods = int(allSections[i].course.theoryPeriods)
 
-        allPeriods.append(allPeriodsBuffer)
-        allPeriodsBuffer = []
+            for p in range(periods):
+                assignPeriod = { allSections[i].code : allSections[i] }
+                allPeriodsBuffer.append(assignPeriod)
+                #print assignPeriods
 
-    #print "PERIODOS: "
-    #print len(allPeriods[5])
-    periodCounter = {}
-    teoriaCounter = 0
-    labCounter = 0
-    teacherPeriod = {}
+    allPeriods.append(allPeriodsBuffer)
+    allPeriodsBuffer = []
+
+    allPeriods = allPeriods[0]
 
     return allPeriods,allLabs,allTeachers,forbiddenTime,contadorSeccionesTH,contadorSeccionesLAB

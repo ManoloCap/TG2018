@@ -5,20 +5,23 @@ Created on Sat Aug 04 23:15:28 2018
 
 @author: Ghost
 """
-from extractData import generateData as generateData
-from initialize import initialize as initialize
+from extractData import generateData
+from initialize import initialize
 from geneticAlgorithm import geneticAlgorithm as GA
 
-from selection import selection as selection
-from fitness import fitness as fitness
-from mutation import mutation as mutation
-from crossover import crossover as crossover
+from selection import selection
+from fitness import generate_fitness
+from mutation import generate_mutation
+from crossover import crossover
 
 from functions import showCompleteData as sortData
+from functions import logger
 import numpy as np
+
 # ---- VARIABLES OF THE ALGORYTHM -------------
-poblation = 4
-goodValue = 90000
+poblation = 1000
+maxGenerations = 200
+initializeLogger = 1000
 # -------------------------------------
 
 # Importando Datos de Excel ---------------------
@@ -29,31 +32,30 @@ print theoryCheck
 print labCheck
 print ""
 
+
+
 #Inicializando Periodos(generación) con datos de Periodo, Dia y Profesor
-generation = initialize(allPeriods,allLabs,allTeachers)
+g0 = initialize(allPeriods,allLabs,allTeachers, poblation, initializeLogger)
 
-g0 = [generation, allLabs, allTeachers, forbiddenTime]
 
-#fitness(g0)
 genetic_scheduling = GA(
     g0,
     selection,
-    fitness,
+    generate_fitness(allLabs, allTeachers, forbiddenTime),
     crossover,
-    mutation,
-    goodValue
+    generate_mutation(allLabs, allTeachers, forbiddenTime),
+    maxGenerations,
+    logger
 )
 
-bestParents = genetic_scheduling.optimize()
+bestParentsList = genetic_scheduling.optimize()
 
-
-#terminando para mostrar
-scores = fitness(bestParents)
-
-#Show Best Parent
-ind = np.argmax(scores)
-print "PUNTUACIÓN: "+str(scores[ind])
-
-bestParent = bestParents[0][ind]
-
-print sortData(bestParent)
+# scores = fitness(bestParentsList)
+#
+# #Show Best Parent
+# ind = np.argmax(scores)
+# print "PUNTUACIÓN: "+str(scores[ind])
+#
+# bestParent = bestParentsList[0][ind]
+#
+# print sortData(bestParent)
