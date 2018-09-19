@@ -16,11 +16,12 @@ from crossover import crossover
 
 from functions import showCompleteData as sortData
 from functions import logger
+from functions import exitDataToExcel
 import numpy as np
 
 # ---- VARIABLES OF THE ALGORYTHM -------------
-poblation = 1000
-maxGenerations = 200
+poblation = 5
+maxGenerations = 20
 initializeLogger = 1000
 # -------------------------------------
 
@@ -48,7 +49,10 @@ genetic_scheduling = GA(
     logger
 )
 
-bestParentsList = genetic_scheduling.optimize()
+bestIndividual = genetic_scheduling.optimize()
+
+#bestIndividual, writeLabs, writeTeachers, writeYear
+exitDataToExcel(bestIndividual['individual'],allLabs, forbiddenTime, allTeachers ,True,True,True)
 
 # scores = fitness(bestParentsList)
 #

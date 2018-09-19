@@ -10,21 +10,21 @@ def generate_fitness(allLabs, allTeachers, forbiddenTime):
 
         #-------------- CRITERIOS DE PUNTOS ORIENTADO POSITIVO ---------------------
         # PUNTOS POSITIVOS
-        closeTHPoints = 2500 #Puntos por periodos de Teoría cercanos
-        closeLABPoints = 2500 #Puntos por periodos de lab cercanos
-        sameDayPoints = 5000 #Puntos por periodos del mismo código en el mismo día
-        periodForTeacherPoints = 200  #Puntos por ser un curso correcto para el profesor
-        demandPositivePoints = 200  #Puntos por cumplir con las demandas
-        repeatedPositivePoints = 1500  #Puntos por no repetir en teachers
-        goodFTPoints = 500  #Puntos por no utilizar horarios prohibidos
-        sameYearPositivePoints = 1500 #Puntos por no cruzar en el mismo año
+        closeTHPoints = 100 #Puntos por periodos de Teoría cercanos
+        closeLABPoints = 100 #Puntos por periodos de lab cercanos
+        sameDayPoints = 2000 #Puntos por periodos del mismo código en el mismo día
+        periodForTeacherPoints = 100 #Puntos por ser un curso correcto para el profesor
+        demandPositivePoints = 1000  #Puntos por cumplir con las demandas
+        repeatedPositivePoints = 1000  #Puntos por no repetir en teachers
+        goodFTPoints = 350  #Puntos por no utilizar horarios prohibidos
+        sameYearPositivePoints = 2000 #Puntos por no cruzar en el mismo año
 
         #Puntos NEGATIVOS
         overSizeLab = -2000 #Laboratorio con más periodos de su capacidad
         demandNegativePoints = -500  #Teacehr No cumple con su demanda
         repeatedNegativePoints = -3000  #En Teacher: horarios simultaneos
-        badFTPoints = -2000   #Periodos Prohibidos
-        sameYearNegativePoints = -2000 #Puntos por no cruzar en el mismo año
+        badFTPoints = -500  #Periodos Prohibidos
+        sameYearNegativePoints = -500 #Puntos por no cruzar en el mismo año
 
 
 
@@ -168,7 +168,7 @@ def generate_fitness(allLabs, allTeachers, forbiddenTime):
                 bufferScore = bufferScore + sameYearPositivePoints
             else:
                 bufferScore = bufferScore + repetidos*sameYearNegativePoints
-                
+
         return bufferScore
 
     return fitness

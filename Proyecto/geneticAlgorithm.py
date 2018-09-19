@@ -42,4 +42,4 @@ class geneticAlgorithm(object):
         for iteration in range(self.max_generations):
             self.execute_epoch()
             #print self.bestIndividual
-        return self.generations[-1][0]
+        return self.bestIndividual
