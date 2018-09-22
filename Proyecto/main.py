@@ -20,8 +20,8 @@ from functions import exitDataToExcel
 import numpy as np
 
 # ---- VARIABLES OF THE ALGORYTHM -------------
-poblation = 5
-maxGenerations = 20
+poblation = 50000
+maxGenerations = 10
 initializeLogger = 1000
 # -------------------------------------
 

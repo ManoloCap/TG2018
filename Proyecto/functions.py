@@ -1166,8 +1166,8 @@ def exitDataToExcel(bestIndividual, allLabs, forbiddenTime, allTeachers, writeLa
                             cellTeacher = 'L5'
 
                         periodos = completeData[code]['LAB'][labCode]['periodos']
-                        print "PERIODOS:"
-                        print periodos
+                        #print "PERIODOS:"
+                        #print periodos
                         for P in range(len(periodos)):
                             period = periodos[P][0]
                             if(period >= 4):
@@ -1270,8 +1270,8 @@ def exitDataToExcel(bestIndividual, allLabs, forbiddenTime, allTeachers, writeLa
                             sheet[cellPeriod] = bufferCell+", "+code
 
             #Coloring forbiddenTime
-            print "RANGE: "
-            print len(forbiddenTime[int(yearNumber)-1].prettyForbiddenTime)
+            #print "RANGE: "
+            #print len(forbiddenTime[int(yearNumber)-1].prettyForbiddenTime)
             for forbidden in range(len(forbiddenTime[int(yearNumber)-1].prettyForbiddenTime)):
                 period = forbiddenTime[int(yearNumber)-1].prettyForbiddenTime[forbidden][0]
                 if(period >= 4):
@@ -1341,8 +1341,8 @@ def exitDataToExcel(bestIndividual, allLabs, forbiddenTime, allTeachers, writeLa
                             cellTeacher = 'L5'
 
                         periodos = completeData[code]['LAB'][labCode]['periodos']
-                        print "PERIODOS:"
-                        print periodos
+                        #print "PERIODOS:"
+                        #print periodos
                         for P in range(len(periodos)):
                             period = periodos[P][0]
                             if(period >= 4):
@@ -1381,8 +1381,8 @@ def exitDataToExcel(bestIndividual, allLabs, forbiddenTime, allTeachers, writeLa
                         cellTeacher = 'L5'
 
                     periodos = completeData[code]['TH']['periodos']
-                    print "PERIODOS:"
-                    print periodos
+                    #print "PERIODOS:"
+                    #print periodos
                     for P in range(len(periodos)):
                         period = periodos[P][0]
                         if(period >= 4):
@@ -1408,7 +1408,58 @@ def exitDataToExcel(bestIndividual, allLabs, forbiddenTime, allTeachers, writeLa
                             sheet[cellPeriod].font = Font(bold=True)
                             sheet[cellPeriod] = bufferCell+", "+code
 
+            #Coloring forbiddenTime
 
+            #Filling all yellow
 
+            for P in range(17):
+                for day in range(5):
+                    if(P >= 4):
+                        period = P +1
+                    else:
+                        period = P
+                    if(day == 0):
+                        cellPeriod = 'D'
+                    elif(day == 1):
+                        cellPeriod = 'E'
+                    elif(day == 2):
+                        cellPeriod = 'F'
+                    elif(day == 3):
+                        cellPeriod = 'G'
+                    elif(day == 4):
+                        cellPeriod = 'H'
+                    cellPeriod = cellPeriod+str(period+5)
+                    sheet[cellPeriod].fill = yellowFill
+                    sheet[cellPeriod].font = Font(bold=True)
+
+            #getting the teacher
+            real_Teacher_Name = ''
+            for teacherRN in allTeachers:
+                if(teacherName == teacherRN[0:20]):
+                    real_Teacher_Name = teacherRN
+
+            #Filling white workTime
+            if(real_Teacher_Name != ''):
+                periodos = allTeachers[real_Teacher_Name].prettyWorkTime
+                #print "PERIODOS:"
+                #print periodos
+                for P in range(len(periodos)):
+                    period = periodos[P][0]
+                    if(period >= 4):
+                        period = period +1
+                    day = periodos[P][1]
+                    if(day == 0):
+                        cellPeriod = 'D'
+                    elif(day == 1):
+                        cellPeriod = 'E'
+                    elif(day == 2):
+                        cellPeriod = 'F'
+                    elif(day == 3):
+                        cellPeriod = 'G'
+                    elif(day == 4):
+                        cellPeriod = 'H'
+                    cellPeriod = cellPeriod+str(period+5)
+                    sheet[cellPeriod].fill = whiteFill
+                    sheet[cellPeriod].font = Font(bold=True)
 
         wb.save(filepath)

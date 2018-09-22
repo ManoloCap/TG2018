@@ -17,36 +17,36 @@ def crossover(parent1, parent2):
     #
     #     bufferParent.append(parent2[i])
 
-    # # Recombinación de un punto (random) -------
-    # punto = random.randrange(0, len(parent1),1)
-    # parentList = [ parent1, parent2 ]
-    #
-    # bufferParent = []
-    # for i in range(punto):
-    #     #print i
-    #     bufferParent.append(parent1[i])
-    #
-    #
-    # for i in range(punto,len(parent2),1):
-    #     #print i
-    #     bufferParent.append(parent2[i])
-
-
-    # Recombinación random ------ ------------------------ -----------
-
+    # Recombinación de un punto (random) -------
+    punto = random.randrange(0, len(parent1),1)
     parentList = [ parent1, parent2 ]
-    
 
     bufferParent = []
-    for i in range(len(parent2)):
+    for i in range(punto):
         #print i
-        randomParent = random.randrange(0,2,1)
-        randomParent = parentList[randomParent]
-        bufferParent.append(randomParent[i])
+        bufferParent.append(parent1[i])
 
 
+    for i in range(punto,len(parent2),1):
+        #print i
+        bufferParent.append(parent2[i])
 
-    # --------------------------------------------------------------
+
+    # # Recombinación random ------ ------------------------ -----------
+    #
+    # parentList = [ parent1, parent2 ]
+    #
+    #
+    # bufferParent = []
+    # for i in range(len(parent2)):
+    #     #print i
+    #     randomParent = random.randrange(0,2,1)
+    #     randomParent = parentList[randomParent]
+    #     bufferParent.append(randomParent[i])
+    #
+    #
+    #
+    # # --------------------------------------------------------------
 
 
     # Creacion de nuevos objetos tipo periodo

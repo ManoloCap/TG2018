@@ -10,18 +10,18 @@ def generate_fitness(allLabs, allTeachers, forbiddenTime):
 
         #-------------- CRITERIOS DE PUNTOS ORIENTADO POSITIVO ---------------------
         # PUNTOS POSITIVOS
-        closeTHPoints = 100 #Puntos por periodos de Teoría cercanos
+        closeTHPoints = 10000 #Puntos por periodos de Teoría cercanos
         closeLABPoints = 100 #Puntos por periodos de lab cercanos
         sameDayPoints = 2000 #Puntos por periodos del mismo código en el mismo día
-        periodForTeacherPoints = 100 #Puntos por ser un curso correcto para el profesor
+        periodForTeacherPoints = 10000 #Puntos por ser un curso correcto para el profesor
         demandPositivePoints = 1000  #Puntos por cumplir con las demandas
         repeatedPositivePoints = 1000  #Puntos por no repetir en teachers
-        goodFTPoints = 350  #Puntos por no utilizar horarios prohibidos
+        goodFTPoints = 5000  #Puntos por no utilizar horarios prohibidos
         sameYearPositivePoints = 2000 #Puntos por no cruzar en el mismo año
 
         #Puntos NEGATIVOS
         overSizeLab = -2000 #Laboratorio con más periodos de su capacidad
-        demandNegativePoints = -500  #Teacehr No cumple con su demanda
+        demandNegativePoints = -500  #Teacher No cumple con su demanda
         repeatedNegativePoints = -3000  #En Teacher: horarios simultaneos
         badFTPoints = -500  #Periodos Prohibidos
         sameYearNegativePoints = -500 #Puntos por no cruzar en el mismo año
@@ -63,6 +63,7 @@ def generate_fitness(allLabs, allTeachers, forbiddenTime):
             for teacher in allTeachers:
                 #Demanda Cumplida
                 if(key[2:] in demandCounter[teacher]):
+                    print "KEY: "+key
                     if(teacher == completeData[key]['TH']['teacher']):
                         demandCounter[teacher][key[2:]]['TH'] = demandCounter[teacher][key[2:]]['TH'] - len(completeData[key]['TH']['periodos'])
 
@@ -88,8 +89,8 @@ def generate_fitness(allLabs, allTeachers, forbiddenTime):
                     bufferScore = bufferScore + sameDayPoints  #Mismo día
                 if( abs(periodos[p][0] - periodos[p+1][0]) == 1):
                     bufferScore = bufferScore + closeTHPoints #Un periodo cerca
-                if( abs(periodos[p][0] - periodos[p+1][0]) == 2):
-                    bufferScore = bufferScore +  closeTHPoints #A dos periodos cerca
+                # if( abs(periodos[p][0] - periodos[p+1][0]) == 2):
+                #     bufferScore = bufferScore +  closeTHPoints #A dos periodos cerca
                 #Forbidden teorías
 
 
@@ -106,8 +107,8 @@ def generate_fitness(allLabs, allTeachers, forbiddenTime):
                         bufferScore = bufferScore + sameDayPoints
                     if( abs(periodos[p][0] - periodos[p+1][0]) == 1):
                         bufferScore = bufferScore + closeLABPoints #Un periodo cerca
-                    if( abs(periodos[p][0] - periodos[p+1][0]) == 2):
-                        bufferScore = bufferScore + closeLABPoints #Segundo periodo cerca
+                    # if( abs(periodos[p][0] - periodos[p+1][0]) == 2):
+                    #     bufferScore = bufferScore + closeLABPoints #Segundo periodo cerca
                 labCounter[completeData[key]['LAB'][labCode]['numLab']] = labCounter[completeData[key]['LAB'][labCode]['numLab']] + 1 #Sumando Cantidad de Laboratorios actuales
 
 

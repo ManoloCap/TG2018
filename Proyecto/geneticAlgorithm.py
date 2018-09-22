@@ -3,6 +3,7 @@
 
 import numpy as np
 import pydash as py_
+import gc
 class geneticAlgorithm(object):
     def __init__(self, g0, selection, fitness, crossover, mutation, max_generations, logger):
         self.generations = [g0]
@@ -32,14 +33,19 @@ class geneticAlgorithm(object):
         ]
 
         self.generations.append(new_generation)
+        if(len(self.generations) > 50):
+            self.generations.pop(0)
 
         #Temporal para prints
         self.bestIndividual = self.logger(sorted_scores[0], self.bestIndividual)
         print 'Actual Generation Best Score: '+str(sorted_scores[0]['score'])
         print 'Best of Bests: '+str(self.bestIndividual['score'])
+        print 'GEN: '
+        print len(self.generations)
 
     def optimize(self):
         for iteration in range(self.max_generations):
             self.execute_epoch()
+            gc.collect()
             #print self.bestIndividual
         return self.bestIndividual
