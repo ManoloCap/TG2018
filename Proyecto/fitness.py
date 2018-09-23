@@ -38,6 +38,7 @@ def generate_fitness(allLabs, allTeachers, forbiddenTime):
         usedForTeachers = {}
         yearCounter = {}
 
+
         for labCode in allLabs:
             labCounter.update( { labCode : 0 } )
 
@@ -63,7 +64,7 @@ def generate_fitness(allLabs, allTeachers, forbiddenTime):
             for teacher in allTeachers:
                 #Demanda Cumplida
                 if(key[2:] in demandCounter[teacher]):
-                    print "KEY: "+key
+                    #print "KEY: "+key
                     if(teacher == completeData[key]['TH']['teacher']):
                         demandCounter[teacher][key[2:]]['TH'] = demandCounter[teacher][key[2:]]['TH'] - len(completeData[key]['TH']['periodos'])
 

@@ -29,15 +29,18 @@ def generate_mutation(allLabs, allTeachers, forbiddenTime):
     def mutation(candidate):
     # TODO: return new candidate
         #cantidad de mutaciones máximas
-        probability = 0.05 # Probabilidad de mutar de 0 a 1
+        probability = 0.02 # Probabilidad de mutar de 0 a 1
 
         #Mutaciones reales
 
         #--------------------------
+        probability = 1 - probability
         for periodPosition in range(len(candidate)):
             do_Mutation = random.randrange(0, 100, 1)
             if(do_Mutation >= probability*100):
                 candidate[periodPosition] = mutatePeriod(candidate[periodPosition])
+                #print "YES"
+                #print do_Mutation
 
 
         return candidate

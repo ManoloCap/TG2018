@@ -20,9 +20,9 @@ from functions import exitDataToExcel
 import numpy as np
 
 # ---- VARIABLES OF THE ALGORYTHM -------------
-poblation = 50000
-maxGenerations = 10
-initializeLogger = 1000
+poblation = 1000
+maxGenerations = 50
+initializeLogger = 200
 # -------------------------------------
 
 # Importando Datos de Excel ---------------------

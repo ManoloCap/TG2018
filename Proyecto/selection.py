@@ -5,7 +5,7 @@ import numpy as np
 import random
 
 OUTSTANDING_PERCENTAGE = 0.65
-MAX_PAIRS = 10000
+MAX_PAIRS = 2000
 def selection(generation, fitness):
     # Selection : return list of 2D tuples (candidate, candidate)
 
