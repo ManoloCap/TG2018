@@ -20,9 +20,9 @@ from functions import exitDataToExcel
 import numpy as np
 
 # ---- VARIABLES OF THE ALGORYTHM -------------
-poblation = 1000
-maxGenerations = 50
-initializeLogger = 200
+poblation = 10000
+maxGenerations = 5000
+initializeLogger = 1000
 # -------------------------------------
 
 # Importando Datos de Excel ---------------------
@@ -53,7 +53,13 @@ bestIndividual = genetic_scheduling.optimize()
 
 #bestIndividual, writeLabs, writeTeachers, writeYear
 exitDataToExcel(bestIndividual['individual'],allLabs, forbiddenTime, allTeachers ,True,True,True)
+#
+# print
+# for time in forbiddenTime:
+#     print
+#     print time.prettyForbiddenTime
 
+print sortData(bestIndividual['individual'])
 # scores = fitness(bestParentsList)
 #
 # #Show Best Parent

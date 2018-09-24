@@ -15,6 +15,7 @@ class geneticAlgorithm(object):
         self.max_generations = max_generations
         self.logger = logger
         self.bestIndividual = ''
+        self.generationCounter = 0
 
     def execute_epoch(self):
         #print len(self.generations[-1])
@@ -41,7 +42,8 @@ class geneticAlgorithm(object):
         print 'Actual Generation Best Score: '+str(sorted_scores[0]['score'])
         print 'Best of Bests: '+str(self.bestIndividual['score'])
         print 'GEN: '
-        print len(self.generations)
+        self.generationCounter = self.generationCounter + 1
+        print self.generationCounter
 
     def optimize(self):
         for iteration in range(self.max_generations):

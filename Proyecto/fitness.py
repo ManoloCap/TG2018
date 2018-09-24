@@ -2,175 +2,298 @@
 # -*- coding: utf-8 -*-
 from functions import showCompleteData as sortData
 import collections
-
+import copy
+from collections import Counter
 def generate_fitness(allLabs, allTeachers, forbiddenTime):
 
     def fitness(candidate):
-        # TODO: return number, the higher the fitter
 
-        #-------------- CRITERIOS DE PUNTOS ORIENTADO POSITIVO ---------------------
-        # PUNTOS POSITIVOS
-        closeTHPoints = 10000 #Puntos por periodos de Teoría cercanos
-        closeLABPoints = 100 #Puntos por periodos de lab cercanos
-        sameDayPoints = 2000 #Puntos por periodos del mismo código en el mismo día
-        periodForTeacherPoints = 10000 #Puntos por ser un curso correcto para el profesor
-        demandPositivePoints = 1000  #Puntos por cumplir con las demandas
-        repeatedPositivePoints = 1000  #Puntos por no repetir en teachers
-        goodFTPoints = 5000  #Puntos por no utilizar horarios prohibidos
-        sameYearPositivePoints = 2000 #Puntos por no cruzar en el mismo año
-
-        #Puntos NEGATIVOS
-        overSizeLab = -2000 #Laboratorio con más periodos de su capacidad
-        demandNegativePoints = -500  #Teacher No cumple con su demanda
-        repeatedNegativePoints = -3000  #En Teacher: horarios simultaneos
-        badFTPoints = -500  #Periodos Prohibidos
-        sameYearNegativePoints = -500 #Puntos por no cruzar en el mismo año
-
-
-
-        scores = []
-        completeData = []
-        bufferScore = 0
+        # Sort Data  ---------------------------------------------------
         completeData = sortData(candidate)
-
-        labCounter = {}
-        demandCounter = {}
-        usedForTeachers = {}
-        yearCounter = {}
-
-
-        for labCode in allLabs:
-            labCounter.update( { labCode : 0 } )
-
+        # valueTeacherBuffers -------------------------------------------
+        teacherDemand = {} #Buffer Demanda del profesor
+        teachersUsedTime = {} #Buffer periodos ocupados para cada profesor
         for teacher in allTeachers:
-            demandCounter.update( { teacher : allTeachers[teacher].demandLeft })
-            usedForTeachers.update( {teacher : []} )
-
-        for i in range(1,6,1):
-            yearCounter.update({ i : [[]] })
-
-        #No Cruzar periodos del mismo año
+            teacherDemand.update({ teacher : copy.deepcopy(allTeachers[teacher].demandLeft) })
+            teachersUsedTime.update({teacher: []})
+        # yearBuffer ---------------
+        yearBuffer = {}
         for period in candidate:
-            bufferTime = [period.period , period.day]
-            bufferPeriod = yearCounter[period.section.course.year]
-            bufferPeriod.append(bufferTime)
-            yearCounter[period.section.course.year] = bufferPeriod
+            period_Year = period.section.course.year
+            position = [period.period,period.day]
 
+            if(period_Year in yearBuffer):
+                period_Year_Buffer = yearBuffer[period_Year]
+                period_Year_Buffer.append(position)
+                yearBuffer.update( {period_Year : period_Year_Buffer})
 
-        #Periodos Teoría cercanos
-        for key in completeData:
-
-            #Teacher Points iterations
-            for teacher in allTeachers:
-                #Demanda Cumplida
-                if(key[2:] in demandCounter[teacher]):
-                    #print "KEY: "+key
-                    if(teacher == completeData[key]['TH']['teacher']):
-                        demandCounter[teacher][key[2:]]['TH'] = demandCounter[teacher][key[2:]]['TH'] - len(completeData[key]['TH']['periodos'])
-
-                        for labCode in completeData[key]['LAB']:
-                            if(completeData[key]['LAB'][labCode]['teacher'] == teacher):
-                                demandCounter[teacher][key[2:]]['LAB'] = demandCounter[teacher][key[2:]]['LAB'] - len(completeData[key]['LAB'][labCode]['periodos'])
-
-                #Periodos utilizados en teacher
-                if(completeData[key]['TH']['teacher'] == teacher):
-                    for periods in completeData[key]['TH']['periodos']:
-                        usedForTeachers[teacher].append(periods)
-
-                for labCode in completeData[key]['LAB']:
-                    if(completeData[key]['LAB'][labCode]['teacher'] == teacher):
-                        for periods in completeData[key]['LAB'][labCode]['periodos']:
-                            usedForTeachers[teacher].append(periods)
-
-            #Periodos TH
-            periodos = completeData[key]['TH']['periodos']
-
-            for p in range(len(periodos) - 1):
-                if(periodos[p][1] == periodos[p+1][1]):
-                    bufferScore = bufferScore + sameDayPoints  #Mismo día
-                if( abs(periodos[p][0] - periodos[p+1][0]) == 1):
-                    bufferScore = bufferScore + closeTHPoints #Un periodo cerca
-                # if( abs(periodos[p][0] - periodos[p+1][0]) == 2):
-                #     bufferScore = bufferScore +  closeTHPoints #A dos periodos cerca
-                #Forbidden teorías
-
-
-            # Puntos por horario correcto para su profesor
-            for p in range(len(periodos)):
-                if(periodos[p] in allTeachers[completeData[key]['TH']['teacher']].prettyWorkTime):
-                    bufferScore = bufferScore + periodForTeacherPoints #Periodo correcto para el profesor
-
-            #Periodos LAB
-            for labCode in completeData[key]['LAB']:
-                periodos = completeData[key]['LAB'][labCode]['periodos']
-                for p in range(len(periodos) - 1):
-                    if(periodos[p][1] == periodos[p+1][1]):  #Mismo día
-                        bufferScore = bufferScore + sameDayPoints
-                    if( abs(periodos[p][0] - periodos[p+1][0]) == 1):
-                        bufferScore = bufferScore + closeLABPoints #Un periodo cerca
-                    # if( abs(periodos[p][0] - periodos[p+1][0]) == 2):
-                    #     bufferScore = bufferScore + closeLABPoints #Segundo periodo cerca
-                labCounter[completeData[key]['LAB'][labCode]['numLab']] = labCounter[completeData[key]['LAB'][labCode]['numLab']] + 1 #Sumando Cantidad de Laboratorios actuales
-
-
-            # Puntos por horario correcto para su profesor
-                for p in range(len(periodos)):
-                    if(periodos[p] in allTeachers[completeData[key]['LAB'][labCode]['teacher']].prettyWorkTime):
-                        bufferScore = bufferScore + periodForTeacherPoints #Periodo correcto para el profesor
-
-
-        #Puntos por laboratorio Excedido
-        for labNumber in labCounter:
-            if(labCounter[labNumber] > 85):
-                bufferScore = bufferScore + overSizeLab
-
-
-        #Puntos por demanda Cumplida
-        for teacher in demandCounter:
-            for code in demandCounter[teacher]:
-                if(demandCounter[teacher][code]['TH'] == 0):
-                    bufferScore = bufferScore + demandPositivePoints
-                else:
-                    bufferScore = bufferScore + demandNegativePoints
-                if(demandCounter[teacher][code]['LAB']== 0):
-                    bufferScore = bufferScore + demandPositivePoints
-                else:
-                    bufferScore = bufferScore + demandNegativePoints
-
-        #Puntos por no tener periodos repetidos
-        for teacher in usedForTeachers:
-            originalLen = len(usedForTeachers[teacher])
-            bufferList = set(map(tuple,usedForTeachers[teacher]))
-            bufferList = map(list,bufferList)
-            repetidos = originalLen - len(bufferList)
-            if(repetidos == 0):
-                bufferScore = bufferScore + repeatedPositivePoints
             else:
-                bufferScore = bufferScore + repetidos*repeatedNegativePoints
+                yearBuffer.update({period_Year : [position]})
 
-        #forbiddenTime iterations
-        for time in forbiddenTime:
-            for period in range(len(candidate)):
-                p = [ candidate[period].period , candidate[period].day ]
 
-                if(p in time.prettyForbiddenTime):
-                    if(int(time.year[-1:]) == candidate[period].section.course.year):
-                        bufferScore = bufferScore + badFTPoints
+        #---------------------- POINTS ----------------------------
+        score = 0
+        #---------------------- Teachers ----------------------------
+        course_that_teacher_want = 1 #Periodo perteneciente a un curso que el profesor quiere.
+        teacher_Time_Right = 1 #Periodo no interfiere con el horario seleccionado por el profesor.
+        teacher_No_Repeat_Period = 1 # El profesor no debe tener dos periodos al mismo día y periodo.
+
+        #---------------------- Theory and Lab Period points ----------------------------
+        close_Period = 1 #Periodos cercanos
+        repeated_Period = 1 #Evitar periodos repetidos
+        sameDay_Period = 1 #Periodos impartidos el mismo día
+
+        # ------------------------ Forbidden Time Points -------------------------
+        forbidden_Time_Points = 1 #Puntos para evitar los horarios prohibidos en el año específico
+
+        # ---------- Year Points ------------------
+        no_Repeat_Same_Course = 1 #Se permiten secciones en la misma hora, con diferente profesor
+        good_Time_Year = 1 # Primero y segundo año en la mañana, tercero, cuarto y quinto en la tarde (TH)
+        #Teachers points
+        for period in candidate:
+            position = [period.period,period.day]
+            course_Code = period.section.course.code
+            section_Code = period.code
+            course_Teacher = period.teacher
+            class_Type = period.section.classType
+
+
+            # --------------------------------------- TEACHERS POINTS  --------------------------------------------
+            if(course_Code in teacherDemand[course_Teacher]):
+
+                #---------------------  Course_that_teacher_want  POINTS ------------------------  MAX POINTS: len(candidate)*nPoints
+                #PUEDE MEJORAR!
+
+                if(teacherDemand[course_Teacher][course_Code][class_Type] > 0):
+                    score = score + course_that_teacher_want
+                    teacherDemand[course_Teacher][course_Code][class_Type] = teacherDemand[course_Teacher][course_Code][class_Type] -1
+                else:
+                    score = score - score + course_that_teacher_want
+
+                #---------------------  Course_that_teacher_want  END ------------------------
+
+
+                #---------------------  teacher_Time_Right  POINTS ------------------------ MAX POINTS: len(candidate)*nPoints
+                # PUEDE MEJORAR!
+                if(position in allTeachers[course_Teacher].prettyWorkTime):
+                    score = score + teacher_Time_Right
+                else:
+                    score = score - teacher_Time_Right
+
+                #---------------------  teacher_Time_Right   END ------------------------
+
+                #--------------------- teacher_No_Repeat_Period  POINTS ------------------------  MAX POINTS: len(candidate)*nPoints
+                if(position not in teachersUsedTime[teacher]):
+                    score = score + teacher_No_Repeat_Period
+                    teachersUsedTime[teacher].append(position)
+                else:
+                    score = score - teacher_No_Repeat_Period
+                #---------------------  teacher_No_Repeat_Period   END ------------------------
+
+            # --------------------------------------- TEACHERS END --------------------------------------------
+            # --------------------------------------- THEORY POINTS --------------------------------------------
+
+        #Theory and LAB periods position
+        for section_Code in completeData:
+            # ----------------------- Theory POINTS --------------------------
+            bufferPeriods = completeData[section_Code]['TH']['periodos']
+
+            # ------------  Close Period Cases POINS   ------------------  MAX POINTS: len(candidate con N peiodos)*nPoints*N
+            # 2 period case --------
+            if(len(bufferPeriods) == 2):
+                period_TimeA = bufferPeriods[0]
+                period_TimeB = bufferPeriods[1]
+                # CLOSE PERIOD
+                if(abs(period_TimeA[0] - period_TimeB[0]) == 1):
+                    score = score + close_Period
+                else:
+                    sore = score - close_Period
+                # SAME DAY
+                if(period_TimeA[1] == period_TimeB[1]):
+                    score = score + sameDay_Period
+                else:
+                    score = score - sameDay_Period
+                # repeated
+                if(period_TimeA != period_TimeB):
+                    score = score + repeated_Period
+                else:
+                    score = score - repeated_Period
+
+            # 3 period case --------
+            if(len(bufferPeriods) == 3):
+                period_TimeA = bufferPeriods[0]
+                period_TimeB = bufferPeriods[1]
+                period_TimeC = bufferPeriods[2]
+
+                # Close to A
+                if(period_TimeA[0] - period_TimeB[0] == -1 and
+                   period_TimeA[0] - period_TimeC[0] == 1):
+                    score = score + close_Period
+                # Close to B
+                elif(period_TimeB[0] - period_TimeA[0] == -1 and
+                     period_TimeB[0] - period_TimeC[0] == 1):
+                    score = score + close_Period
+                # Close to C
+                elif(period_TimeC[0] - period_TimeB[0] == -1 and
+                     period_TimeC[0] - period_TimeC[0] == 1):
+                    score = score + close_Period
+
+                # No Close
+                else:
+                    sore = score - close_Period
+
+                # A and B Same Day
+                if(period_TimeA[1] == period_TimeB[1]):
+                    score = score + sameDay_Period
+                # A and C Same Day
+                if(period_TimeA[1] == period_TimeC[1]):
+                    score = score + sameDay_Period
+                # B and C Same Day
+                if(period_TimeB[1] == period_TimeC[1]):
+                    score = score + sameDay_Period
+                # No Same Day
+                else:
+                    score = score - sameDay_Period
+
+                # repeated
+                if(period_TimeA != period_TimeB):
+                    score = score + repeated_Period
+                elif(period_TimeA != period_TimeC):
+                    score = score + repeated_Period
+                elif(period_TimeB != period_TimeC):
+                    score = score + repeated_Period
+                else:
+                    score = score - repeated_Period
+                #PUEDE SER: PUNTOS POR LA MISMA HORA CON DIFERENTE DIA EN CASO DE NO TENER EL MISMO DIA.
+
+            # ------------  Close Period Cases END   ------------------
+
+        # ----------------------- Theory END --------------------------
+
+        # ----------------------- LAB POINTS --------------------------
+
+            for section_LAB in completeData[section_Code]['LAB']:
+                bufferPeriods = completeData[section_Code]['LAB'][section_LAB]['periodos']
+
+                # ------------  Close Period Cases POINS   ------------------  MAX POINTS: len(candidate con N peiodos)*nPoints*N
+                # 2 period case --------
+                if(len(bufferPeriods) == 2):
+                    period_TimeA = bufferPeriods[0]
+                    period_TimeB = bufferPeriods[1]
+                    # CLOSE PERIOD
+                    if(abs(period_TimeA[0] - period_TimeB[0]) == 1):
+                        score = score + close_Period
                     else:
-                        bufferScore = bufferScore + goodFTPoints
+                        sore = score - close_Period
+                    # SAME DAY
+                    if(period_TimeA[1] == period_TimeB[1]):
+                        score = score + sameDay_Period
+                    else:
+                        score = score - sameDay_Period
+                    # repeated
+                    if(period_TimeA != period_TimeB):
+                        score = score + repeated_Period
+                    else:
+                        score = score - repeated_Period
+                # 3 period case --------
+                if(len(bufferPeriods) == 3):
+                    period_TimeA = bufferPeriods[0]
+                    period_TimeB = bufferPeriods[1]
+                    period_TimeC = bufferPeriods[2]
 
-        #Same year iteracions
+                    # Close to A
+                    if(period_TimeA[0] - period_TimeB[0] == -1 and
+                       period_TimeA[0] - period_TimeC[0] == 1):
+                        score = score + close_Period
+                    # Close to B
+                    elif(period_TimeB[0] - period_TimeA[0] == -1 and
+                         period_TimeB[0] - period_TimeC[0] == 1):
+                        score = score + close_Period
+                    # Close to C
+                    elif(period_TimeC[0] - period_TimeB[0] == -1 and
+                         period_TimeC[0] - period_TimeC[0] == 1):
+                        score = score + close_Period
 
-        for year in yearCounter:
-            originalLen = len(yearCounter[year])
-            bufferList = set(map(tuple,yearCounter[year]))
-            bufferList = map(list,bufferList)
-            repetidos = originalLen - len(bufferList)
-            if(repetidos == 0):
-                bufferScore = bufferScore + sameYearPositivePoints
+                    # No Close
+                    else:
+                        sore = score - close_Period
+
+                    # A and B Same Day
+                    if(period_TimeA[1] == period_TimeB[1]):
+                        score = score + sameDay_Period
+                    # A and C Same Day
+                    if(period_TimeA[1] == period_TimeC[1]):
+                        score = score + sameDay_Period
+                    # B and C Same Day
+                    if(period_TimeB[1] == period_TimeC[1]):
+                        score = score + sameDay_Period
+                    # No Same Day
+                    else:
+                        score = score - sameDay_Period
+
+                # repeated
+                if(period_TimeA != period_TimeB):
+                    score = score + repeated_Period
+                elif(period_TimeA != period_TimeC):
+                    score = score + repeated_Period
+                elif(period_TimeB != period_TimeC):
+                    score = score + repeated_Period
+                else:
+                    score = score - repeated_Period
+                    #PUEDE SER: PUNTOS POR LA MISMA HORA CON DIFERENTE DIA EN CASO DE NO TENER EL MISMO DIA.
+
+                # ------------  Close Period Cases END   ------------------
+
+        # ----------------------- LAB END --------------------------
+
+        #Year points:
+        # ---------------------- YEAR POINTS -------------------------
+        repeated = 0
+        for year in yearBuffer:
+            #print yearBuffer[year]
+            bufferSET = Counter([tuple(t) for t in yearBuffer[year]])
+            #print bufferSET
+            for element in bufferSET:
+                repeated = repeated + bufferSET[element] - 1
+
+
+        # ------------------ No repeated Year POINTS ------------------ MAX POINTS = 0
+        score = score - no_Repeat_Same_Course*repeated
+        # ------------------ No repeated Year END ------------------ MAX POINTS: len(candidate)*nPoints
+
+        for period in candidate:
+            period_Year = period.section.course.year
+            position = period.period
+            if(period_Year == 1):
+                if(position <= 8):
+                    score = score + good_Time_Year
+                else:
+                    score = score - good_Time_Year
+            elif(period_Year == 2):
+                if(position <= 11):
+                    score = score + good_Time_Year
+                else:
+                    score = score - good_Time_Year
             else:
-                bufferScore = bufferScore + repetidos*sameYearNegativePoints
+                if(position >= 8):
+                    score = score + good_Time_Year
+                else:
+                    score = score - good_Time_Year
+         # ---------------------- YEAR END -------------------------
 
-        return bufferScore
+        # Forbidden time
+        # --------------- forbidden_Time_Points POINTS -------------------
+        for period in candidate:
+            period_Period = period.period
+            period_Day = period.day
+            period_Year = period.section.course.year
+            for position in forbiddenTime[period_Year].prettyForbiddenTime:
+                if(period_Period != position[0] and
+                   period_Day != position[1]):
+                   score = score + forbidden_Time_Points
+                else:
+                    score = score - forbidden_Time_Points
+        # --------------- forbidden_Time_Points END -------------------
+        return score
 
     return fitness

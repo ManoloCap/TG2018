@@ -4,8 +4,8 @@ import operator
 import numpy as np
 import random
 
-OUTSTANDING_PERCENTAGE = 0.65
-MAX_PAIRS = 2000
+OUTSTANDING_PERCENTAGE = 0.35
+MAX_PAIRS = 800
 def selection(generation, fitness):
     # Selection : return list of 2D tuples (candidate, candidate)
 

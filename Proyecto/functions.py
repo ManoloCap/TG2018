@@ -13,6 +13,7 @@ import random
 import matplotlib.pyplot as plt
 from openpyxl import load_workbook
 from openpyxl.styles import Color, PatternFill, Font, Border
+import copy
 class GetOutOfLoop( Exception ):
     pass
 
@@ -1092,18 +1093,20 @@ def showCompleteData(generation):
     return completeData
 
 def logger(individual, bestIndividual):
-
+    show = False #MOSTRAR GENERACION NUEVA
     if(bestIndividual != ''):
         if( individual['score'] > bestIndividual['score']):
-            bestIndividual = individual
+            bestIndividual = copy.deepcopy(individual)
+            if(show == True):
+                print "NEW MAX SCORE: "+str(bestIndividual['score'] )
+                print showCompleteData(bestIndividual['individual'])
+                print "---------------------------------------"
+    else:
+        bestIndividual = individual
+        if(show == True):
             print "NEW MAX SCORE: "+str(bestIndividual['score'] )
             print showCompleteData(bestIndividual['individual'])
             print "---------------------------------------"
-    else:
-        bestIndividual = individual
-        print "NEW MAX SCORE: "+str(bestIndividual['score'] )
-        print showCompleteData(bestIndividual['individual'])
-        print "---------------------------------------"
     return bestIndividual
 
 def exitDataToExcel(bestIndividual, allLabs, forbiddenTime, allTeachers, writeLabs, writeTeachers, writeYear):

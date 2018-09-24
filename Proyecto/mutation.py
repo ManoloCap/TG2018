@@ -29,7 +29,7 @@ def generate_mutation(allLabs, allTeachers, forbiddenTime):
     def mutation(candidate):
     # TODO: return new candidate
         #cantidad de mutaciones máximas
-        probability = 0.02 # Probabilidad de mutar de 0 a 1
+        probability = 0.01 # Probabilidad de mutar de 0 a 1
 
         #Mutaciones reales
 
