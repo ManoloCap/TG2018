@@ -32,7 +32,7 @@ MAX_PAIRS = 300
 probability = 0.01
 # -------------------------------------
 #print parameters
-printFrequency =
+printFrequency = 20
 writeData = True
 writeProcess = False
 #---------------------
