@@ -2,8 +2,7 @@
 # -*- coding: utf-8 -*-
 import random
 from objects import period as createPeriod
-def generate_mutation(allLabs, allTeachers, forbiddenTime):
-
+def generate_mutation(probabilityIN, allLabs, allTeachers, forbiddenTime):
 
     def mutatePeriod(period):
 
@@ -27,14 +26,8 @@ def generate_mutation(allLabs, allTeachers, forbiddenTime):
         return new_Period
 
     def mutation(candidate):
-    # TODO: return new candidate
-        #cantidad de mutaciones máximas
-        probability = 0.01 # Probabilidad de mutar de 0 a 1
 
-        #Mutaciones reales
-
-        #--------------------------
-        probability = 1 - probability
+        probability = 1 - probabilityIN
         for periodPosition in range(len(candidate)):
             do_Mutation = random.randrange(0, 100, 1)
             if(do_Mutation >= probability*100):

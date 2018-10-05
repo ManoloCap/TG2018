@@ -14,6 +14,9 @@ import matplotlib.pyplot as plt
 from openpyxl import load_workbook
 from openpyxl.styles import Color, PatternFill, Font, Border
 import copy
+import csv
+import os
+
 class GetOutOfLoop( Exception ):
     pass
 
@@ -1092,7 +1095,7 @@ def showCompleteData(generation):
 
     return completeData
 
-def logger(individual, bestIndividual):
+def logger(individual, bestIndividual, show):
     show = False #MOSTRAR GENERACION NUEVA
     if(bestIndividual != ''):
         if( individual['score'] > bestIndividual['score']):
@@ -1109,66 +1112,345 @@ def logger(individual, bestIndividual):
             print "---------------------------------------"
     return bestIndividual
 
-def exitDataToExcel(bestIndividual, allLabs, forbiddenTime, allTeachers, writeLabs, writeTeachers, writeYear):
+def generate_exitDataToExcel(allLabs, forbiddenTime, allTeachers, writeLabs, writeTeachers, writeYear, printFrequency):
+    def exitDataToExcel(bestIndividual, generationNumber):
+        #print printFrequency
+        if(generationNumber == 1 or
+           generationNumber%printFrequency == 0):
+            redFill = PatternFill(start_color='FFFF0000',
+                               end_color='FFFF0000',
+                               fill_type='solid')
 
-    redFill = PatternFill(start_color='FFFF0000',
-                       end_color='FFFF0000',
-                       fill_type='solid')
+            yellowFill = PatternFill(start_color='E6FF18',
+                               end_color='E6FF18',
+                               fill_type='solid')
 
-    yellowFill = PatternFill(start_color='E6FF18',
-                       end_color='E6FF18',
-                       fill_type='solid')
+            whiteFill = PatternFill(start_color='FFFFFF',
+                               end_color='FFFFFF',
+                               fill_type='solid')
+            completeData = showCompleteData(bestIndividual)
 
-    whiteFill = PatternFill(start_color='FFFFFF',
-                       end_color='FFFFFF',
-                       fill_type='solid')
-    completeData = showCompleteData(bestIndividual)
+            if(writeLabs == True):
+                # ESCRIBIENDO EXCEL DE LABORATORIOS -------------------------
+                filepath="data/horarioLaboratorios.xlsx"
+                wb = load_workbook(filepath)
+                #Limpiando Hojas anteriores:
+                for sheet in wb.sheetnames:
+                    if(sheet != 'Laboratorio 0'):
+                        wb.remove(wb[sheet])
 
-    if(writeLabs == True):
-        # ESCRIBIENDO EXCEL DE LABORATORIOS -------------------------
-        filepath="data/horarioLaboratorios.xlsx"
-        wb = load_workbook(filepath)
-        #Limpiando Hojas anteriores:
-        for sheet in wb.sheetnames:
-            if(sheet != 'Laboratorio 0'):
-                wb.remove(wb[sheet])
-
-        source = wb['Laboratorio 0']
-        for keys in allLabs:
-            if(keys != 0):
-                bufferSheet = wb.copy_worksheet(source)
-                bufferSheet.title = 'Laboratorio '+str(keys)
-
-
-        for sheet in wb:
-            #Preparing Data
-            labNumber = sheet.title.split(' ')[1]
-            sheet['E2'] = int(labNumber)
-            cellToClean = ['D','E','F','G','H','I','J','K','L']
-            for celda in range(len(cellToClean)):
-                for i in range(18):
-                    cell = cellToClean[celda]+str(i+5)
-                    sheet[cell] = ''
-                    sheet[cell].fill = whiteFill
+                source = wb['Laboratorio 0']
+                for keys in allLabs:
+                    if(keys != 0):
+                        bufferSheet = wb.copy_worksheet(source)
+                        bufferSheet.title = 'Laboratorio '+str(keys)
 
 
-            #Start writing data
-            cell = 'I5'
-            cellTeacher = 'J5'
-            cellPeriod = ''
-            for code in completeData:
-                for labCode in completeData[code]['LAB']:
-                    if(int(completeData[code]['LAB'][labCode]['numLab']) == int(labNumber)):
+                for sheet in wb:
+                    #Preparing Data
+                    labNumber = sheet.title.split(' ')[1]
+                    sheet['E2'] = int(labNumber)
+                    cellToClean = ['D','E','F','G','H','I','J','K','L']
+                    for celda in range(len(cellToClean)):
+                        for i in range(18):
+                            cell = cellToClean[celda]+str(i+5)
+                            sheet[cell] = ''
+                            sheet[cell].fill = whiteFill
 
-                        sheet[cell] = labCode
-                        sheet[cellTeacher] = completeData[code]['LAB'][labCode]['teacher']
-                        cell = cell[0]+str(int(cell[1:])+1)
-                        cellTeacher = cellTeacher[0]+str(int(cellTeacher[1:])+1)
-                        if(int(cell[1:])+1 == 24):
-                            cell = 'K5'
-                            cellTeacher = 'L5'
 
-                        periodos = completeData[code]['LAB'][labCode]['periodos']
+                    #Start writing data
+                    cell = 'I5'
+                    cellTeacher = 'J5'
+                    cellPeriod = ''
+                    for code in completeData:
+                        for labCode in completeData[code]['LAB']:
+                            if(int(completeData[code]['LAB'][labCode]['numLab']) == int(labNumber)):
+
+                                sheet[cell] = labCode
+                                sheet[cellTeacher] = completeData[code]['LAB'][labCode]['teacher']
+                                cell = cell[0]+str(int(cell[1:])+1)
+                                cellTeacher = cellTeacher[0]+str(int(cellTeacher[1:])+1)
+                                if(int(cell[1:])+1 == 24):
+                                    cell = 'K5'
+                                    cellTeacher = 'L5'
+
+                                periodos = completeData[code]['LAB'][labCode]['periodos']
+                                #print "PERIODOS:"
+                                #print periodos
+                                for P in range(len(periodos)):
+                                    period = periodos[P][0]
+                                    if(period >= 4):
+                                        period = period +1
+                                    day = periodos[P][1]
+                                    if(day == 0):
+                                        cellPeriod = 'D'
+                                    elif(day == 1):
+                                        cellPeriod = 'E'
+                                    elif(day == 2):
+                                        cellPeriod = 'F'
+                                    elif(day == 3):
+                                        cellPeriod = 'G'
+                                    elif(day == 4):
+                                        cellPeriod = 'H'
+                                    cellPeriod = cellPeriod+str(period+5)
+                                    bufferCell = sheet[cellPeriod].value
+                                    if(bufferCell == ''):
+                                        sheet[cellPeriod] = labCode
+                                        sheet[cellPeriod].font = Font(bold=True)
+                                    else:
+                                        sheet[cellPeriod].fill = redFill
+                                        sheet[cellPeriod].font = Font(bold=True)
+                                        sheet[cellPeriod] = bufferCell+", "+labCode
+
+
+                if not os.path.exists("data/solutions/"+str(generationNumber)):
+                    os.makedirs("data/solutions/"+str(generationNumber))
+                filepath="data/solutions/"+str(generationNumber)+"/horarioLaboratorios.xlsx"
+                wb.save(filepath)
+
+            if(writeYear == True):
+
+                # ESCRIBIENDO EXCEL DE LABORATORIOS -------------------------
+                filepath="data/horarioEstudiantes.xlsx"
+                wb = load_workbook(filepath)
+                #Limpiando Hojas anteriores:
+                for sheet in wb.sheetnames:
+                    if(sheet != 'Year 1'):
+                        wb.remove(wb[sheet])
+
+                source = wb['Year 1']
+                for keys in range(5):
+                    if(keys != 0):
+                        bufferSheet = wb.copy_worksheet(source)
+                        bufferSheet.title = 'Year '+str(keys + 1)
+
+
+                for sheet in wb:
+                    #Preparing Data
+                    yearNumber = sheet.title.split(' ')[1]
+                    sheet['E2'] = int(yearNumber)
+                    cellToClean = ['D','E','F','G','H','I','J','K','L']
+                    for celda in range(len(cellToClean)):
+                        for i in range(18):
+                            cell = cellToClean[celda]+str(i+5)
+                            sheet[cell] = ''
+                            sheet[cell].fill = whiteFill
+
+
+
+                    #Start writing data
+                    cell = 'I5'
+                    cellTeacher = 'J5'
+                    cellPeriod = ''
+                    for code in completeData:
+                        if(int(completeData[code]['TH']['year']) == int(yearNumber)):
+
+                            sheet[cell] = code
+                            sheet[cellTeacher] = completeData[code]['TH']['teacher']
+                            cell = cell[0]+str(int(cell[1:])+1)
+                            cellTeacher = cellTeacher[0]+str(int(cellTeacher[1:])+1)
+                            if(int(cell[1:])+1 == 24):
+                                cell = 'K5'
+                                cellTeacher = 'L5'
+
+                            periodos = completeData[code]['TH']['periodos']
+                            for P in range(len(periodos)):
+                                period = periodos[P][0]
+                                if(period >= 4):
+                                    period = period +1
+                                day = periodos[P][1]
+                                if(day == 0):
+                                    cellPeriod = 'D'
+                                elif(day == 1):
+                                    cellPeriod = 'E'
+                                elif(day == 2):
+                                    cellPeriod = 'F'
+                                elif(day == 3):
+                                    cellPeriod = 'G'
+                                elif(day == 4):
+                                    cellPeriod = 'H'
+                                cellPeriod = cellPeriod+str(period+5)
+                                bufferCell = sheet[cellPeriod].value
+                                if(bufferCell == ''):
+                                    sheet[cellPeriod] = code
+                                    sheet[cellPeriod].font = Font(bold=True)
+                                else:
+                                    sheet[cellPeriod].fill = redFill
+                                    sheet[cellPeriod].font = Font(bold=True)
+                                    sheet[cellPeriod] = bufferCell+", "+code
+
+                    #Coloring forbiddenTime
+                    #print "RANGE: "
+                    #print len(forbiddenTime[int(yearNumber)-1].prettyForbiddenTime)
+                    for forbidden in range(len(forbiddenTime[int(yearNumber)-1].prettyForbiddenTime)):
+                        period = forbiddenTime[int(yearNumber)-1].prettyForbiddenTime[forbidden][0]
+                        if(period >= 4):
+                            period = period +1
+                        day = forbiddenTime[int(yearNumber)-1].prettyForbiddenTime[forbidden][1]
+                        #print[period,day]
+                        if(day == 0):
+                            cellPeriod = 'D'
+                        elif(day == 1):
+                            cellPeriod = 'E'
+                        elif(day == 2):
+                            cellPeriod = 'F'
+                        elif(day == 3):
+                            cellPeriod = 'G'
+                        elif(day == 4):
+                            cellPeriod = 'H'
+                        cellPeriod = cellPeriod+str(period+5)
+                        sheet[cellPeriod].font = Font(bold=True)
+                        sheet[cellPeriod].fill = yellowFill
+
+                filepath="data/solutions/"+str(generationNumber)+"/horarioEstudiantes.xlsx"
+                wb.save(filepath)
+
+            if(writeTeachers == True):
+                # ESCRIBIENDO EXCEL DE LABORATORIOS -------------------------
+                filepath="data/horarioProfesores.xlsx"
+                wb = load_workbook(filepath)
+                #Limpiando Hojas anteriores:
+                for sheet in wb.sheetnames:
+                    if(sheet != 'Plantilla'):
+                        wb.remove(wb[sheet])
+
+                source = wb['Plantilla']
+                for keys in allTeachers:
+                    if(keys != 0):
+                        bufferSheet = wb.copy_worksheet(source)
+                        bufferSheet.title = keys[0:20]
+
+
+                for sheet in wb:
+                    #Preparing Data
+                    teacherName = sheet.title
+                    sheet['E2'] = teacherName
+                    cellToClean = ['D','E','F','G','H','I','J','K','L']
+                    for celda in range(len(cellToClean)):
+                        for i in range(18):
+                            cell = cellToClean[celda]+str(i+5)
+                            sheet[cell] = ''
+                            sheet[cell].fill = whiteFill
+
+
+                    #Start writing data
+                    cell = 'I5'
+                    cellTeacher = 'J5'
+                    cellPeriod = ''
+                    for code in completeData:
+                        for labCode in completeData[code]['LAB']:
+                            actualTeacher = completeData[code]['LAB'][labCode]['teacher'][0:20]
+                            if(teacherName == actualTeacher):
+
+                                sheet[cell] = labCode
+                                sheet[cellTeacher] = completeData[code]['LAB'][labCode]['teacher']
+                                cell = cell[0]+str(int(cell[1:])+1)
+                                cellTeacher = cellTeacher[0]+str(int(cellTeacher[1:])+1)
+                                if(int(cell[1:])+1 == 24):
+                                    cell = 'K5'
+                                    cellTeacher = 'L5'
+
+                                periodos = completeData[code]['LAB'][labCode]['periodos']
+                                #print "PERIODOS:"
+                                #print periodos
+                                for P in range(len(periodos)):
+                                    period = periodos[P][0]
+                                    if(period >= 4):
+                                        period = period +1
+                                    day = periodos[P][1]
+                                    if(day == 0):
+                                        cellPeriod = 'D'
+                                    elif(day == 1):
+                                        cellPeriod = 'E'
+                                    elif(day == 2):
+                                        cellPeriod = 'F'
+                                    elif(day == 3):
+                                        cellPeriod = 'G'
+                                    elif(day == 4):
+                                        cellPeriod = 'H'
+                                    cellPeriod = cellPeriod+str(period+5)
+                                    bufferCell = sheet[cellPeriod].value
+                                    if(bufferCell == ''):
+                                        sheet[cellPeriod] = labCode
+                                        sheet[cellPeriod].font = Font(bold=True)
+                                    else:
+                                        sheet[cellPeriod].fill = redFill
+                                        sheet[cellPeriod].font = Font(bold=True)
+                                        sheet[cellPeriod] = bufferCell+", "+labCode
+
+                    for code in completeData:
+                        actualTeacher = completeData[code]['TH']['teacher'][0:20]
+                        if(teacherName == actualTeacher):
+
+                            sheet[cell] = code
+                            sheet[cellTeacher] = completeData[code]['TH']['teacher']
+                            cell = cell[0]+str(int(cell[1:])+1)
+                            cellTeacher = cellTeacher[0]+str(int(cellTeacher[1:])+1)
+                            if(int(cell[1:])+1 == 24):
+                                cell = 'K5'
+                                cellTeacher = 'L5'
+
+                            periodos = completeData[code]['TH']['periodos']
+                            #print "PERIODOS:"
+                            #print periodos
+                            for P in range(len(periodos)):
+                                period = periodos[P][0]
+                                if(period >= 4):
+                                    period = period +1
+                                day = periodos[P][1]
+                                if(day == 0):
+                                    cellPeriod = 'D'
+                                elif(day == 1):
+                                    cellPeriod = 'E'
+                                elif(day == 2):
+                                    cellPeriod = 'F'
+                                elif(day == 3):
+                                    cellPeriod = 'G'
+                                elif(day == 4):
+                                    cellPeriod = 'H'
+                                cellPeriod = cellPeriod+str(period+5)
+                                bufferCell = sheet[cellPeriod].value
+                                if(bufferCell == ''):
+                                    sheet[cellPeriod] = labCode
+                                    sheet[cellPeriod].font = Font(bold=True)
+                                else:
+                                    sheet[cellPeriod].fill = redFill
+                                    sheet[cellPeriod].font = Font(bold=True)
+                                    sheet[cellPeriod] = bufferCell+", "+code
+
+                    #Coloring forbiddenTime
+
+                    #Filling all yellow
+
+                    for P in range(17):
+                        for day in range(5):
+                            if(P >= 4):
+                                period = P +1
+                            else:
+                                period = P
+                            if(day == 0):
+                                cellPeriod = 'D'
+                            elif(day == 1):
+                                cellPeriod = 'E'
+                            elif(day == 2):
+                                cellPeriod = 'F'
+                            elif(day == 3):
+                                cellPeriod = 'G'
+                            elif(day == 4):
+                                cellPeriod = 'H'
+                            cellPeriod = cellPeriod+str(period+5)
+                            sheet[cellPeriod].fill = yellowFill
+                            sheet[cellPeriod].font = Font(bold=True)
+
+                    #getting the teacher
+                    real_Teacher_Name = ''
+                    for teacherRN in allTeachers:
+                        if(teacherName == teacherRN[0:20]):
+                            real_Teacher_Name = teacherRN
+
+                    #Filling white workTime
+                    if(real_Teacher_Name != ''):
+                        periodos = allTeachers[real_Teacher_Name].prettyWorkTime
                         #print "PERIODOS:"
                         #print periodos
                         for P in range(len(periodos)):
@@ -1187,282 +1469,35 @@ def exitDataToExcel(bestIndividual, allLabs, forbiddenTime, allTeachers, writeLa
                             elif(day == 4):
                                 cellPeriod = 'H'
                             cellPeriod = cellPeriod+str(period+5)
-                            bufferCell = sheet[cellPeriod].value
-                            if(bufferCell == ''):
-                                sheet[cellPeriod] = labCode
-                                sheet[cellPeriod].font = Font(bold=True)
-                            else:
-                                sheet[cellPeriod].fill = redFill
-                                sheet[cellPeriod].font = Font(bold=True)
-                                sheet[cellPeriod] = bufferCell+", "+labCode
-
-
-
-
-        wb.save(filepath)
-
-    if(writeYear == True):
-
-        # ESCRIBIENDO EXCEL DE LABORATORIOS -------------------------
-        filepath="data/horarioEstudiantes.xlsx"
-        wb = load_workbook(filepath)
-        #Limpiando Hojas anteriores:
-        for sheet in wb.sheetnames:
-            if(sheet != 'Year 1'):
-                wb.remove(wb[sheet])
-
-        source = wb['Year 1']
-        for keys in range(5):
-            if(keys != 0):
-                bufferSheet = wb.copy_worksheet(source)
-                bufferSheet.title = 'Year '+str(keys + 1)
-
-
-        for sheet in wb:
-            #Preparing Data
-            yearNumber = sheet.title.split(' ')[1]
-            sheet['E2'] = int(yearNumber)
-            cellToClean = ['D','E','F','G','H','I','J','K','L']
-            for celda in range(len(cellToClean)):
-                for i in range(18):
-                    cell = cellToClean[celda]+str(i+5)
-                    sheet[cell] = ''
-                    sheet[cell].fill = whiteFill
-
-
-
-            #Start writing data
-            cell = 'I5'
-            cellTeacher = 'J5'
-            cellPeriod = ''
-            for code in completeData:
-                if(int(completeData[code]['TH']['year']) == int(yearNumber)):
-
-                    sheet[cell] = code
-                    sheet[cellTeacher] = completeData[code]['TH']['teacher']
-                    cell = cell[0]+str(int(cell[1:])+1)
-                    cellTeacher = cellTeacher[0]+str(int(cellTeacher[1:])+1)
-                    if(int(cell[1:])+1 == 24):
-                        cell = 'K5'
-                        cellTeacher = 'L5'
-
-                    periodos = completeData[code]['TH']['periodos']
-                    for P in range(len(periodos)):
-                        period = periodos[P][0]
-                        if(period >= 4):
-                            period = period +1
-                        day = periodos[P][1]
-                        if(day == 0):
-                            cellPeriod = 'D'
-                        elif(day == 1):
-                            cellPeriod = 'E'
-                        elif(day == 2):
-                            cellPeriod = 'F'
-                        elif(day == 3):
-                            cellPeriod = 'G'
-                        elif(day == 4):
-                            cellPeriod = 'H'
-                        cellPeriod = cellPeriod+str(period+5)
-                        bufferCell = sheet[cellPeriod].value
-                        if(bufferCell == ''):
-                            sheet[cellPeriod] = code
+                            sheet[cellPeriod].fill = whiteFill
                             sheet[cellPeriod].font = Font(bold=True)
-                        else:
-                            sheet[cellPeriod].fill = redFill
-                            sheet[cellPeriod].font = Font(bold=True)
-                            sheet[cellPeriod] = bufferCell+", "+code
-
-            #Coloring forbiddenTime
-            #print "RANGE: "
-            #print len(forbiddenTime[int(yearNumber)-1].prettyForbiddenTime)
-            for forbidden in range(len(forbiddenTime[int(yearNumber)-1].prettyForbiddenTime)):
-                period = forbiddenTime[int(yearNumber)-1].prettyForbiddenTime[forbidden][0]
-                if(period >= 4):
-                    period = period +1
-                day = forbiddenTime[int(yearNumber)-1].prettyForbiddenTime[forbidden][1]
-                print[period,day]
-                if(day == 0):
-                    cellPeriod = 'D'
-                elif(day == 1):
-                    cellPeriod = 'E'
-                elif(day == 2):
-                    cellPeriod = 'F'
-                elif(day == 3):
-                    cellPeriod = 'G'
-                elif(day == 4):
-                    cellPeriod = 'H'
-                cellPeriod = cellPeriod+str(period+5)
-                sheet[cellPeriod].font = Font(bold=True)
-                sheet[cellPeriod].fill = yellowFill
 
 
-        wb.save(filepath)
-
-    if(writeTeachers == True):
-        # ESCRIBIENDO EXCEL DE LABORATORIOS -------------------------
-        filepath="data/horarioProfesores.xlsx"
-        wb = load_workbook(filepath)
-        #Limpiando Hojas anteriores:
-        for sheet in wb.sheetnames:
-            if(sheet != 'Plantilla'):
-                wb.remove(wb[sheet])
-
-        source = wb['Plantilla']
-        for keys in allTeachers:
-            if(keys != 0):
-                bufferSheet = wb.copy_worksheet(source)
-                bufferSheet.title = keys[0:20]
+                filepath="data/solutions/"+str(generationNumber)+"/horarioProfesores.xlsx"
+                wb.save(filepath)
 
 
-        for sheet in wb:
-            #Preparing Data
-            teacherName = sheet.title
-            sheet['E2'] = teacherName
-            cellToClean = ['D','E','F','G','H','I','J','K','L']
-            for celda in range(len(cellToClean)):
-                for i in range(18):
-                    cell = cellToClean[celda]+str(i+5)
-                    sheet[cell] = ''
-                    sheet[cell].fill = whiteFill
 
 
-            #Start writing data
-            cell = 'I5'
-            cellTeacher = 'J5'
-            cellPeriod = ''
-            for code in completeData:
-                for labCode in completeData[code]['LAB']:
-                    actualTeacher = completeData[code]['LAB'][labCode]['teacher'][0:20]
-                    if(teacherName == actualTeacher):
+    return exitDataToExcel
 
-                        sheet[cell] = labCode
-                        sheet[cellTeacher] = completeData[code]['LAB'][labCode]['teacher']
-                        cell = cell[0]+str(int(cell[1:])+1)
-                        cellTeacher = cellTeacher[0]+str(int(cellTeacher[1:])+1)
-                        if(int(cell[1:])+1 == 24):
-                            cell = 'K5'
-                            cellTeacher = 'L5'
+def saveData(writeData):
+    def saveDataProcess(scoreData):
+        if(writeData == True):
+            with open('persons.csv', 'wb') as csvfile:
+                filewriter = csv.writer(csvfile, delimiter=',',
+                                        quotechar='|', quoting=csv.QUOTE_MINIMAL)
+                for i in range(len(scoreData)):
+                    filewriter.writerow([ i+1,scoreData[i]])
 
-                        periodos = completeData[code]['LAB'][labCode]['periodos']
-                        #print "PERIODOS:"
-                        #print periodos
-                        for P in range(len(periodos)):
-                            period = periodos[P][0]
-                            if(period >= 4):
-                                period = period +1
-                            day = periodos[P][1]
-                            if(day == 0):
-                                cellPeriod = 'D'
-                            elif(day == 1):
-                                cellPeriod = 'E'
-                            elif(day == 2):
-                                cellPeriod = 'F'
-                            elif(day == 3):
-                                cellPeriod = 'G'
-                            elif(day == 4):
-                                cellPeriod = 'H'
-                            cellPeriod = cellPeriod+str(period+5)
-                            bufferCell = sheet[cellPeriod].value
-                            if(bufferCell == ''):
-                                sheet[cellPeriod] = labCode
-                                sheet[cellPeriod].font = Font(bold=True)
-                            else:
-                                sheet[cellPeriod].fill = redFill
-                                sheet[cellPeriod].font = Font(bold=True)
-                                sheet[cellPeriod] = bufferCell+", "+labCode
+        return
+    return saveDataProcess
 
-            for code in completeData:
-                actualTeacher = completeData[code]['TH']['teacher'][0:20]
-                if(teacherName == actualTeacher):
-
-                    sheet[cell] = code
-                    sheet[cellTeacher] = completeData[code]['TH']['teacher']
-                    cell = cell[0]+str(int(cell[1:])+1)
-                    cellTeacher = cellTeacher[0]+str(int(cellTeacher[1:])+1)
-                    if(int(cell[1:])+1 == 24):
-                        cell = 'K5'
-                        cellTeacher = 'L5'
-
-                    periodos = completeData[code]['TH']['periodos']
-                    #print "PERIODOS:"
-                    #print periodos
-                    for P in range(len(periodos)):
-                        period = periodos[P][0]
-                        if(period >= 4):
-                            period = period +1
-                        day = periodos[P][1]
-                        if(day == 0):
-                            cellPeriod = 'D'
-                        elif(day == 1):
-                            cellPeriod = 'E'
-                        elif(day == 2):
-                            cellPeriod = 'F'
-                        elif(day == 3):
-                            cellPeriod = 'G'
-                        elif(day == 4):
-                            cellPeriod = 'H'
-                        cellPeriod = cellPeriod+str(period+5)
-                        bufferCell = sheet[cellPeriod].value
-                        if(bufferCell == ''):
-                            sheet[cellPeriod] = labCode
-                            sheet[cellPeriod].font = Font(bold=True)
-                        else:
-                            sheet[cellPeriod].fill = redFill
-                            sheet[cellPeriod].font = Font(bold=True)
-                            sheet[cellPeriod] = bufferCell+", "+code
-
-            #Coloring forbiddenTime
-
-            #Filling all yellow
-
-            for P in range(17):
-                for day in range(5):
-                    if(P >= 4):
-                        period = P +1
-                    else:
-                        period = P
-                    if(day == 0):
-                        cellPeriod = 'D'
-                    elif(day == 1):
-                        cellPeriod = 'E'
-                    elif(day == 2):
-                        cellPeriod = 'F'
-                    elif(day == 3):
-                        cellPeriod = 'G'
-                    elif(day == 4):
-                        cellPeriod = 'H'
-                    cellPeriod = cellPeriod+str(period+5)
-                    sheet[cellPeriod].fill = yellowFill
-                    sheet[cellPeriod].font = Font(bold=True)
-
-            #getting the teacher
-            real_Teacher_Name = ''
-            for teacherRN in allTeachers:
-                if(teacherName == teacherRN[0:20]):
-                    real_Teacher_Name = teacherRN
-
-            #Filling white workTime
-            if(real_Teacher_Name != ''):
-                periodos = allTeachers[real_Teacher_Name].prettyWorkTime
-                #print "PERIODOS:"
-                #print periodos
-                for P in range(len(periodos)):
-                    period = periodos[P][0]
-                    if(period >= 4):
-                        period = period +1
-                    day = periodos[P][1]
-                    if(day == 0):
-                        cellPeriod = 'D'
-                    elif(day == 1):
-                        cellPeriod = 'E'
-                    elif(day == 2):
-                        cellPeriod = 'F'
-                    elif(day == 3):
-                        cellPeriod = 'G'
-                    elif(day == 4):
-                        cellPeriod = 'H'
-                    cellPeriod = cellPeriod+str(period+5)
-                    sheet[cellPeriod].fill = whiteFill
-                    sheet[cellPeriod].font = Font(bold=True)
-
-        wb.save(filepath)
+def printProcess(writeProcess):
+    def printProcessFunction(actualBestScore, bestScore, generationCounter):
+        if(writeProcess == True):
+            print 'Actual Generation Best Score: '+actualBestScore
+            print 'Best of Bests: '+bestScore
+            print 'GEN: '
+            print generationCounter
+    return printProcessFunction

@@ -7,7 +7,7 @@ from collections import Counter
 def generate_fitness(allLabs, allTeachers, forbiddenTime):
 
     def fitness(candidate):
-
+        #print len(candidate)
         # Sort Data  ---------------------------------------------------
         completeData = sortData(candidate)
         # valueTeacherBuffers -------------------------------------------
@@ -34,12 +34,12 @@ def generate_fitness(allLabs, allTeachers, forbiddenTime):
         #---------------------- POINTS ----------------------------
         score = 0
         #---------------------- Teachers ----------------------------
-        course_that_teacher_want = 1 #Periodo perteneciente a un curso que el profesor quiere.
+        course_that_teacher_want = 10 #Periodo perteneciente a un curso que el profesor quiere.
         teacher_Time_Right = 1 #Periodo no interfiere con el horario seleccionado por el profesor.
-        teacher_No_Repeat_Period = 1 # El profesor no debe tener dos periodos al mismo día y periodo.
+        teacher_No_Repeat_Period = 2 # El profesor no debe tener dos periodos al mismo día y periodo.
 
         #---------------------- Theory and Lab Period points ----------------------------
-        close_Period = 1 #Periodos cercanos
+        close_Period = 10 #Periodos cercanos
         repeated_Period = 1 #Evitar periodos repetidos
         sameDay_Period = 1 #Periodos impartidos el mismo día
 
@@ -48,7 +48,7 @@ def generate_fitness(allLabs, allTeachers, forbiddenTime):
 
         # ---------- Year Points ------------------
         no_Repeat_Same_Course = 1 #Se permiten secciones en la misma hora, con diferente profesor
-        good_Time_Year = 1 # Primero y segundo año en la mañana, tercero, cuarto y quinto en la tarde (TH)
+        good_Time_Year = 10 # Primero y segundo año en la mañana, tercero, cuarto y quinto en la tarde (TH)
         #Teachers points
         for period in candidate:
             position = [period.period,period.day]
@@ -287,7 +287,7 @@ def generate_fitness(allLabs, allTeachers, forbiddenTime):
             period_Period = period.period
             period_Day = period.day
             period_Year = period.section.course.year
-            for position in forbiddenTime[period_Year].prettyForbiddenTime:
+            for position in forbiddenTime[period_Year-1].prettyForbiddenTime:
                 if(period_Period != position[0] and
                    period_Day != position[1]):
                    score = score + forbidden_Time_Points
