@@ -22,12 +22,12 @@ from functions import printProcess
 import numpy as np
 
 # ---- VARIABLES OF THE ALGORYTHM -------------
-poblation = 5000
+poblation = 50000
 maxGenerations = 1000
 initializeLogger = 1000
 # Selection parameters
 OUTSTANDING_PERCENTAGE = 0.35
-MAX_PAIRS = 150
+MAX_PAIRS = 300
 #Mutation parameters
 probability = 0.01
 # -------------------------------------

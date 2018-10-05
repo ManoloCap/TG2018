@@ -35,19 +35,19 @@ def generate_fitness(allLabs, allTeachers, forbiddenTime):
         score = 0
         #---------------------- Teachers ----------------------------
         course_that_teacher_want = 10 #Periodo perteneciente a un curso que el profesor quiere.
-        teacher_Time_Right = 1 #Periodo no interfiere con el horario seleccionado por el profesor.
-        teacher_No_Repeat_Period = 2 # El profesor no debe tener dos periodos al mismo día y periodo.
+        teacher_Time_Right = 2 #Periodo no interfiere con el horario seleccionado por el profesor.
+        teacher_No_Repeat_Period = 5 # El profesor no debe tener dos periodos al mismo día y periodo.
 
         #---------------------- Theory and Lab Period points ----------------------------
         close_Period = 10 #Periodos cercanos
-        repeated_Period = 1 #Evitar periodos repetidos
-        sameDay_Period = 1 #Periodos impartidos el mismo día
+        repeated_Period = 10 #Evitar periodos repetidos
+        sameDay_Period = 5 #Periodos impartidos el mismo día
 
         # ------------------------ Forbidden Time Points -------------------------
-        forbidden_Time_Points = 1 #Puntos para evitar los horarios prohibidos en el año específico
+        forbidden_Time_Points = 5 #Puntos para evitar los horarios prohibidos en el año específico
 
         # ---------- Year Points ------------------
-        no_Repeat_Same_Course = 1 #Se permiten secciones en la misma hora, con diferente profesor
+        no_Repeat_Same_Course = 20 #Se permiten secciones en la misma hora, con diferente profesor
         good_Time_Year = 10 # Primero y segundo año en la mañana, tercero, cuarto y quinto en la tarde (TH)
         #Teachers points
         for period in candidate:

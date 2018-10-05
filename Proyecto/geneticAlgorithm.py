@@ -28,7 +28,6 @@ class geneticAlgorithm(object):
     def execute_epoch(self):
         #print len(self.generations[-1])
         current_generation = self.generations[-1]
-        print len(current_generation)
         pairs, sorted_scores = self.selection(current_generation, self.fitness)
 
         new_candidates = [
